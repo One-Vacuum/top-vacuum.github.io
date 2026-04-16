@@ -1,0 +1,100 @@
+---
+import LanguageSwitcher from './LanguageSwitcher.astro';
+import { ui } from '../i18n/ui';
+
+const t = ui.ko;
+---
+
+<header class="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
+  <div class="container-custom">
+    <div class="flex items-center justify-between h-16 md:h-20">
+      <!-- Logo -->
+      <a href="/" class="flex items-center">
+        <span class="text-xl md:text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100" style="font-family: 'Outfit', sans-serif;">Top Vacuum Solution</span>
+      </a>
+
+      <!-- Navigation -->
+      <nav class="hidden md:flex items-center gap-8">
+        <a href="#products" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" data-i18n="nav.products">
+          {t['nav.products']}
+        </a>
+        <a href="#buy" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" data-i18n="nav.buy">
+          {t['nav.buy']}
+        </a>
+        <a href="#contact" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" data-i18n="nav.contact">
+          {t['nav.contact']}
+        </a>
+      </nav>
+
+      <!-- Controls -->
+      <div class="flex items-center gap-3">
+        <!-- Theme Toggle -->
+        <button
+          id="theme-toggle"
+          class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+          aria-label="Toggle theme"
+        >
+          ☀️
+        </button>
+
+        <LanguageSwitcher />
+
+        <!-- Mobile Menu Button -->
+        <button
+          id="mobile-menu-btn"
+          class="md:hidden p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+          aria-label="Toggle menu"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <nav id="mobile-menu" class="hidden md:hidden pb-4">
+      <div class="flex flex-col gap-4">
+        <a href="#products" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" data-i18n="nav.products">
+          {t['nav.products']}
+        </a>
+        <a href="#buy" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" data-i18n="nav.buy">
+          {t['nav.buy']}
+        </a>
+        <a href="#contact" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" data-i18n="nav.contact">
+          {t['nav.contact']}
+        </a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const menuBtn = document.getElementById('mobile-menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  menuBtn?.addEventListener('click', () => {
+    mobileMenu?.classList.toggle('hidden');
+  });
+
+  mobileMenu?.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => {
+      mobileMenu?.classList.add('hidden');
+    });
+  });
+
+  // Theme toggle
+  const themeToggle = document.getElementById('theme-toggle');
+  let isDark = document.documentElement.classList.contains('dark');
+
+  function updateIcon() {
+    if (themeToggle) themeToggle.textContent = isDark ? '🌙' : '☀️';
+  }
+  updateIcon();
+
+  themeToggle?.addEventListener('click', () => {
+    isDark = !isDark;
+    document.documentElement.classList.toggle('dark', isDark);
+    updateIcon();
+  });
+</script>

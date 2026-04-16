@@ -1,0 +1,87 @@
+---
+import { ui } from '../i18n/ui';
+
+const t = ui.ko;
+---
+
+<footer class="bg-gray-900 text-gray-300">
+  <div class="container-custom py-12">
+    <div class="grid md:grid-cols-3 gap-8">
+      <!-- Company Info -->
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="text-xl font-bold text-white">Top Vacuum Solution</span>
+        </div>
+        <p class="text-sm text-gray-400" data-i18n="site.description">
+          {t['site.description']}
+        </p>
+      </div>
+
+      <!-- Quick Links -->
+      <div>
+        <h4 class="font-semibold text-white mb-4">
+          <a href="#" class="hover:text-gray-300 transition-colors" data-i18n="nav.home">{t['nav.home']}</a>
+        </h4>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="#products" class="hover:text-white transition-colors" data-i18n="nav.products">{t['nav.products']}</a>
+          </li>
+          <li>
+            <a href="#buy" class="hover:text-white transition-colors" data-i18n="nav.buy">{t['nav.buy']}</a>
+          </li>
+          <li>
+            <a href="#contact" class="hover:text-white transition-colors" data-i18n="nav.contact">{t['nav.contact']}</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <h4 class="font-semibold text-white mb-4" data-i18n="contact.title">{t['contact.title']}</h4>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+            <span data-i18n="contact.phoneValue">{t['contact.phoneValue']}</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <a href="mailto:sales@gvac.co.kr" class="hover:text-white transition-colors" data-i18n="contact.emailValue">{t['contact.emailValue']}</a>
+          </li>
+          <li class="flex items-start gap-2">
+            <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span data-i18n="contact.addressValue">{t['contact.addressValue']}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
+      <p>
+        <span data-i18n="footer.company">{t['footer.company']}</span>
+        <span class="mx-1.5 hidden sm:inline">|</span>
+        <br class="sm:hidden" />
+        <span data-i18n="footer.owner">{t['footer.owner']}</span>
+        <span class="mx-1.5 hidden sm:inline">|</span>
+        <br class="sm:hidden" />
+        <span data-i18n="footer.bizNo">{t['footer.bizNo']}</span>
+      </p>
+      <p class="mt-1">
+        <span data-i18n="contact.addressValue">{t['contact.addressValue']}</span>
+        <span class="mx-1.5 hidden sm:inline">|</span>
+        <br class="sm:hidden" />
+        <span data-i18n="contact.phoneValue">{t['contact.phoneValue']}</span>
+        <span class="mx-1.5 hidden sm:inline">|</span>
+        <br class="sm:hidden" />
+        <span data-i18n="contact.emailValue">{t['contact.emailValue']}</span>
+      </p>
+      <p class="mt-2" data-i18n="footer.copyright">{t['footer.copyright']}</p>
+    </div>
+  </div>
+</footer>
