@@ -49,10 +49,8 @@ export const ui = {
     'contact.address': '주소',
     'contact.addressValue': '충남 아산시 음봉면 월랑리 438-1 (31416)',
     'contact.phoneValue': '041-544-8058',
-
-    // KakaoTalk
-    'kakao.tooltip': '카카오톡 문의',
-    'kakao.comingSoon': '카카오톡 채널 준비중입니다.',
+    'contact.mobile': '휴대폰',
+    'contact.mobileValue': '010-4455-1309',
 
     // Footer
     'footer.company': '상호: 탑베큠솔루션',
@@ -110,10 +108,8 @@ export const ui = {
     'contact.address': 'Address',
     'contact.addressValue': '438-1 Wollang-ri, Eumbong-myeon, Asan-si, Chungcheongnam-do 31416',
     'contact.phoneValue': '041-544-8058',
-
-    // KakaoTalk
-    'kakao.tooltip': 'KakaoTalk Inquiry',
-    'kakao.comingSoon': 'KakaoTalk channel coming soon.',
+    'contact.mobile': 'Mobile',
+    'contact.mobileValue': '010-4455-1309',
 
     // Footer
     'footer.company': 'Company: Top Vacuum Solution',
