@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased text-gray-900 bg-white dark:text-gray-100 dark:bg-gray-950;
+  }
+}
+
+@layer components {
+  .container-custom {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section {
+    @apply py-16 md:py-24;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3
+           bg-primary-600 text-white font-medium rounded-lg
+           hover:bg-primary-700 transition-colors duration-200;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3
+           border-2 border-primary-600 text-primary-600 font-medium rounded-lg
+           hover:bg-primary-50 dark:text-primary-400 dark:border-primary-400
+           dark:hover:bg-primary-900/20 transition-colors duration-200;
+  }
+
+  .filter-btn {
+    @apply px-4 py-2 text-sm font-medium rounded-full
+           border border-gray-200 dark:border-gray-700
+           text-gray-600 dark:text-gray-400
+           hover:border-primary-300 hover:text-primary-600
+           dark:hover:border-primary-600 dark:hover:text-primary-400
+           transition-colors duration-200 cursor-pointer;
+  }
+
+  .filter-btn.filter-active {
+    @apply bg-primary-600 text-white border-primary-600
+           dark:bg-primary-500 dark:border-primary-500;
+  }
+
+  .card-flip {
+    perspective: 1000px;
+  }
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    @apply bg-white dark:bg-gray-800 rounded-xl;
+  }
+
+  .card-front {
+    position: relative;
+    transition: opacity 0.25s ease;
+    opacity: 1;
+  }
+
+  .card-flip.flipped .card-front {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .card-back {
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.25s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .card-flip.flipped .card-back {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Hover effects only on devices that support hover (not mobile touch) */
+@media (hover: hover) {
+  .card-front {
+    &:hover {
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+  }
+}

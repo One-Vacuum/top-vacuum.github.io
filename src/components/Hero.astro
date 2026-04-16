@@ -1,0 +1,64 @@
+---
+import { ui } from '../i18n/ui';
+import { loadProducts } from '../lib/products';
+
+const t = ui.ko;
+const products = loadProducts();
+const tileImages = products.slice(0, 16).map(p => `/products/images/${p.image}`);
+---
+
+<section class="section bg-gradient-to-br from-primary-50 to-white dark:from-gray-900 dark:to-gray-950 relative overflow-hidden">
+  <!-- Animated product tile background -->
+  <div class="absolute inset-0 opacity-[0.15] dark:opacity-[0.10] pointer-events-none flex flex-col justify-center gap-6" aria-hidden="true">
+    <div class="hero-tiles flex gap-6" style="animation: scrollTiles 50s linear infinite;">
+      {[...tileImages, ...tileImages].map((img) => (
+        <div class="flex-none w-32 h-32 md:w-44 md:h-44 rounded-xl overflow-hidden">
+          <img src={img} alt="" class="w-full h-full object-contain" loading="eager" />
+        </div>
+      ))}
+    </div>
+    <div class="hero-tiles flex gap-6" style="animation: scrollTilesReverse 45s linear infinite;">
+      {[...tileImages.slice().reverse(), ...tileImages.slice().reverse()].map((img) => (
+        <div class="flex-none w-32 h-32 md:w-44 md:h-44 rounded-xl overflow-hidden">
+          <img src={img} alt="" class="w-full h-full object-contain" loading="eager" />
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div class="container-custom relative z-10">
+    <div class="max-w-3xl mx-auto text-center">
+      <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mb-4" style="font-family: 'Outfit', sans-serif;">
+        Top Vacuum Solution
+      </h1>
+      <p id="hero-subtitle" class="text-2xl md:text-3xl text-primary-600 dark:text-primary-400 font-medium mb-6" data-i18n="hero.subtitle">
+        {t['hero.subtitle']}
+      </p>
+      <p class="text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed" data-i18n="hero.description">
+        {t['hero.description']}
+      </p>
+      <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="#products" class="btn-primary" data-i18n="nav.products">
+          {t['nav.products']}
+        </a>
+        <a href="#buy" class="btn-primary" data-i18n="nav.buy">
+          {t['nav.buy']}
+        </a>
+        <a href="#contact" class="btn-secondary" data-i18n="nav.contact">
+          {t['nav.contact']}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  @keyframes scrollTiles {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  @keyframes scrollTilesReverse {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+  }
+</style>
