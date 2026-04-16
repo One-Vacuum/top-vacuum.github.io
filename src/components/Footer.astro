@@ -47,6 +47,12 @@ const t = ui.ko;
           </li>
           <li class="flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <span data-i18n="contact.mobileValue">{t['contact.mobileValue']}</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
             <a href="mailto:sales@gvac.co.kr" class="hover:text-white transition-colors" data-i18n="contact.emailValue">{t['contact.emailValue']}</a>
@@ -77,6 +83,9 @@ const t = ui.ko;
         <span class="mx-1.5 hidden sm:inline">|</span>
         <br class="sm:hidden" />
         <span data-i18n="contact.phoneValue">{t['contact.phoneValue']}</span>
+        <span class="mx-1.5 hidden sm:inline">|</span>
+        <br class="sm:hidden" />
+        <span data-i18n="contact.mobileValue">{t['contact.mobileValue']}</span>
         <span class="mx-1.5 hidden sm:inline">|</span>
         <br class="sm:hidden" />
         <span data-i18n="contact.emailValue">{t['contact.emailValue']}</span>
