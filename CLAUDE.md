@@ -31,7 +31,7 @@ Top Vacuum Solution (탑베큠솔루션) — Leybold(라이볼트) 한국 공식
 top-vacuum.github.io/
 ├── src/
 │   ├── components/
-│   │   ├── Header.astro           # Sticky header with logo, nav, lang/theme toggles
+│   │   ├── Header.astro           # Sticky header with nav, lang/theme toggles
 │   │   ├── Footer.astro           # Dark footer with contact info & quick links
 │   │   ├── Hero.astro             # Hero section with animated product tile background
 │   │   ├── HomePage.astro         # Main page (products, buy, contact) + client-side JS
@@ -49,8 +49,7 @@ top-vacuum.github.io/
 │       └── global.css             # Tailwind imports + custom component classes
 ├── public/
 │   ├── images/
-│   │   ├── logo.png               # Company logo
-│   │   └── favicon/               # Favicon files (ico, png, apple-touch-icon)
+│   │   └── placeholder-product.svg # Placeholder for missing product images
 │   ├── products/
 │   │   ├── products.json          # Product data (easy to edit!)
 │   │   └── images/                # Product images
@@ -123,7 +122,6 @@ Each entry in `public/products/products.json`:
 
 - **Prefer JPG over PNG** for product images — significantly smaller file sizes
 - Keep product images as small as possible to improve page load speed and minimize repository size
-- Logo and favicon files can remain PNG for transparency support
 
 ## Key Files for Content Updates
 
@@ -132,8 +130,6 @@ Each entry in `public/products/products.json`:
 | **Products** | `public/products/products.json` + images in `public/products/images/` |
 | UI text translations | `src/i18n/ui.ts` |
 | Contact info | `src/i18n/ui.ts` (phone, email, address values) |
-| Company logo | `public/images/logo.png` |
-| Favicon | `public/images/favicon/` |
 
 ## Commands
 
