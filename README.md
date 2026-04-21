@@ -1,4 +1,4 @@
-# Top Vacuum Solution (탑베큠솔루션)
+# Top Vacuum Inc. (탑베큠 주식회사)
 
 Astro + Tailwind CSS로 제작된 회사 브로슈어 웹사이트입니다.
 

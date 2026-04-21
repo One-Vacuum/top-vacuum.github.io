@@ -14,7 +14,7 @@ This file provides guidance for Claude Code when working on this project.
 
 ## Project Overview
 
-Top Vacuum Solution (탑베큠솔루션) — Leybold(라이볼트) 한국 공식 대리점. A bilingual (Korean/English) company brochure website built with Astro and Tailwind CSS, hosted on GitHub Pages at https://topvac.co.kr.
+Top Vacuum Inc. (탑베큠 주식회사) — Leybold(라이볼트) 한국 공식 대리점. A bilingual (Korean/English) company brochure website built with Astro and Tailwind CSS, hosted on GitHub Pages at https://topvac.co.kr.
 
 ## Tech Stack
 
@@ -34,7 +34,7 @@ top-vacuum.github.io/
 │   │   ├── Header.astro           # Sticky header with nav, lang/theme toggles
 │   │   ├── Footer.astro           # Dark footer with contact info & quick links
 │   │   ├── Hero.astro             # Hero section with animated product tile background
-│   │   ├── HomePage.astro         # Main page (products, buy, contact) + client-side JS
+│   │   ├── HomePage.astro         # Main page (products, contact) + client-side JS
 │   │   ├── ProductCard.astro      # Product card with opacity-based front/back toggle
 │   │   └── LanguageSwitcher.astro # KO/EN toggle (tap either side to switch)
 │   ├── i18n/
@@ -64,7 +64,7 @@ top-vacuum.github.io/
 
 ### Page Rendering Flow
 1. `index.astro` renders `HomePage.astro` directly (single page, no routing)
-2. `HomePage.astro` contains all page content (products, buy, contact) and client-side JS for language switching, category filtering, search, and sorting
+2. `HomePage.astro` contains all page content (products, contact) and client-side JS for language switching, category filtering, search, and sorting
 3. `BaseLayout.astro` wraps everything with HTML shell, Header, and Footer
 4. All translatable elements use `data-i18n` attributes; client-side `setLang()` swaps text from `src/i18n/ui.ts`
 5. Product names/descriptions use `data-name-ko`/`data-name-en` and `data-desc-ko`/`data-desc-en` attributes

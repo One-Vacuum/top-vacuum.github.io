@@ -1,4 +1,4 @@
-# Top Vacuum Solution
+# Top Vacuum Inc.
 
 Company brochure website built with Astro + Tailwind CSS.
 
