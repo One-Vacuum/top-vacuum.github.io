@@ -109,6 +109,7 @@ Each entry in `public/products/products.json`:
 - Tapping either KO or EN button toggles to the other language
 - All translatable elements have `data-i18n="key"` attributes
 - `setLang('ko'|'en')` in `HomePage.astro` script swaps all text at runtime
+- For translations that contain HTML (e.g. inline links), add `data-i18n-html` to the element and use Astro's `set:html={...}` for static render; the runtime switcher uses `innerHTML` when `data-i18n-html` is present
 - Product cards use `data-name-ko`/`data-name-en` for bilingual product names
 - Korean is the fallback language if a translation key is missing
 

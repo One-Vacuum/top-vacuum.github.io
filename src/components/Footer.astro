@@ -12,9 +12,7 @@ const t = ui.ko;
         <div class="flex items-center gap-3 mb-4">
           <span class="text-xl font-bold text-white">Top Vacuum Inc.</span>
         </div>
-        <p class="text-sm text-gray-400" data-i18n="site.description">
-          {t['site.description']}
-        </p>
+        <p class="text-sm text-gray-400" data-i18n="site.description" data-i18n-html set:html={t['site.description']}></p>
       </div>
 
       <!-- Quick Links -->

@@ -315,6 +315,8 @@ const products = loadProducts();
         document.title = value;
       } else if (el.tagName === 'META') {
         el.setAttribute('content', value);
+      } else if (el.hasAttribute('data-i18n-html')) {
+        el.innerHTML = value;
       } else {
         el.textContent = value;
       }
@@ -347,6 +349,12 @@ const products = loadProducts();
     if (heroSubtitle) {
       heroSubtitle.style.display = heroSubtitle.textContent ? '' : 'none';
     }
+
+    // Update Leybold links to language-specific URL
+    const leyboldUrl = lang === 'ko' ? 'https://www.leybold.com/ko-kr' : 'https://www.leybold.com/en';
+    document.querySelectorAll<HTMLAnchorElement>('[data-leybold-link]').forEach((el) => {
+      el.href = leyboldUrl;
+    });
   }
 
   function toggleLang() {
