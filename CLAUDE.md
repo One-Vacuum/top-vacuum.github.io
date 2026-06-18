@@ -40,7 +40,8 @@ top-vacuum.github.io/
 │   ├── i18n/
 │   │   └── ui.ts                  # All translation strings (KO/EN)
 │   ├── lib/
-│   │   └── products.ts            # Product loading utility (reads public/products/products.json)
+│   │   ├── products.ts            # Product loading utility (reads public/products/products.json)
+│   │   └── features.ts            # Feature flags (e.g. SHOW_PRODUCTS to hide the products section)
 │   ├── layouts/
 │   │   └── BaseLayout.astro       # Main HTML layout (head, header, footer)
 │   ├── pages/
@@ -68,6 +69,11 @@ top-vacuum.github.io/
 3. `BaseLayout.astro` wraps everything with HTML shell, Header, and Footer
 4. All translatable elements use `data-i18n` attributes; client-side `setLang()` swaps text from `src/i18n/ui.ts`
 5. Product names/descriptions use `data-name-ko`/`data-name-en` and `data-desc-ko`/`data-desc-en` attributes
+
+### Feature Flags
+- `src/lib/features.ts` holds compile-time feature flags consumed by the Astro components
+- `SHOW_PRODUCTS` (default `false`): when `false`, the entire "제품 소개 / Products" section in `HomePage.astro` is hidden, along with all product-related navigation (header desktop + mobile links, footer quick link, hero CTA button, and the hero product-tile background). The code is gated with `{SHOW_PRODUCTS && (...)}`, not deleted — flip to `true` to restore the section once products exist
+- Contact section and all other content remain visible regardless of this flag
 
 ### Product Loading
 - Products are loaded at **build time** from `public/products/products.json` via `src/lib/products.ts`

@@ -1,5 +1,6 @@
 ---
 import { ui } from '../i18n/ui';
+import { SHOW_PRODUCTS } from '../lib/features';
 
 const t = ui.ko;
 ---
@@ -21,9 +22,11 @@ const t = ui.ko;
           <a href="#" class="hover:text-gray-300 transition-colors" data-i18n="nav.home">{t['nav.home']}</a>
         </h4>
         <ul class="space-y-2 text-sm">
+          {SHOW_PRODUCTS && (
           <li>
             <a href="#products" class="hover:text-white transition-colors" data-i18n="nav.products">{t['nav.products']}</a>
           </li>
+          )}
           <li>
             <a href="#contact" class="hover:text-white transition-colors" data-i18n="nav.contact">{t['nav.contact']}</a>
           </li>
