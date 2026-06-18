@@ -4,6 +4,7 @@ import Hero from './Hero.astro';
 import ProductCard from './ProductCard.astro';
 import { ui } from '../i18n/ui';
 import { loadProducts, formatPrice } from '../lib/products';
+import { SHOW_PRODUCTS } from '../lib/features';
 
 const t = ui.ko;
 const products = loadProducts();
@@ -12,6 +13,7 @@ const products = loadProducts();
 <BaseLayout>
   <Hero />
 
+  {SHOW_PRODUCTS && (
   <!-- Products Section -->
   <section id="products" class="section bg-white dark:bg-gray-950">
     <div class="container-custom">
@@ -110,6 +112,7 @@ const products = loadProducts();
       )}
     </div>
   </section>
+  )}
 
   <!-- Contact Section -->
   <section id="contact" class="section bg-white dark:bg-gray-950">

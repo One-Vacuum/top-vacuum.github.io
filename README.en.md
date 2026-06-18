@@ -118,6 +118,17 @@ public/products/
 
 Set `products.json` to `[]` and the website will show "Products Coming Soon..."
 
+### Hiding the Entire Products Section:
+
+If there are no products to sell yet and you want to hide the whole "Products" section, use the flag in `src/lib/features.ts`.
+
+```ts
+export const SHOW_PRODUCTS = false; // false = hides the products section and related nav links
+```
+
+- `false`: hides the products section and all product-related links in the header, footer, and hero (the code stays intact).
+- `true`: after adding products, flip this to `true` to bring the section back.
+
 ## Deployment
 
 The site auto-deploys to GitHub Pages when you push to `main`.

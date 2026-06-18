@@ -1,6 +1,7 @@
 ---
 import LanguageSwitcher from './LanguageSwitcher.astro';
 import { ui } from '../i18n/ui';
+import { SHOW_PRODUCTS } from '../lib/features';
 
 const t = ui.ko;
 ---
@@ -15,9 +16,11 @@ const t = ui.ko;
 
       <!-- Navigation -->
       <nav class="hidden md:flex items-center gap-8">
+        {SHOW_PRODUCTS && (
         <a href="#products" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" data-i18n="nav.products">
           {t['nav.products']}
         </a>
+        )}
         <a href="#contact" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" data-i18n="nav.contact">
           {t['nav.contact']}
         </a>
@@ -58,9 +61,11 @@ const t = ui.ko;
     <!-- Mobile Navigation -->
     <nav id="mobile-menu" class="hidden md:hidden pb-4">
       <div class="flex flex-col gap-4">
+        {SHOW_PRODUCTS && (
         <a href="#products" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" data-i18n="nav.products">
           {t['nav.products']}
         </a>
+        )}
         <a href="#contact" class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" data-i18n="nav.contact">
           {t['nav.contact']}
         </a>
