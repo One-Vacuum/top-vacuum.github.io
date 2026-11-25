@@ -119,13 +119,15 @@ export const SHOW_PRODUCTS = false; // false = hides the products section and re
 Submitting the "Quote & Technical Inquiry" form emails **kynam@topvac.co.kr** through [FormSubmit](https://formsubmit.co). GitHub Pages is static (no server), so the site uses this no-account form-to-email relay.
 
 - **Email format:** subject `[탑베큠 홈페이지] 견적·기술 문의 — company · name`; the body is a table (회사명, 담당자/이름, 연락처, 이메일, 펌프 모델 · 필요 압력, 문의 내용, 접수 시각, 문의 언어 — Korean labels for the owner). Hitting "Reply" answers the customer directly.
-- **One-time activation (required):** after deploy, the first submission makes FormSubmit send an "Activate Form" email to kynam@topvac.co.kr. Click its button once; later submissions are then delivered. Submissions made before activation are kept for 30 days and delivered after it.
-- **Local testing:** on localhost nothing is sent; a preview of the email the owner would receive is shown instead. To test a real send, run the command below. Without `PUBLIC_INQUIRY_TO` it goes to kynam@topvac.co.kr.
+- **One-time activation (required):** after deploy, the first submission makes FormSubmit send an "Activate Form" email to kynam@topvac.co.kr. Click its button once; later submissions are then delivered. Submissions made before activation are kept for 30 days and delivered after it; meanwhile visitors see a "received" message with an email link.
+- **On failure:** network errors, no answer within 15 s, or a FormSubmit refusal keep the visitor's input and show an email link pre-filled with the same content.
+- **Testing:** real sends happen only on the production domain (topvac.co.kr). On localhost, a phone on the same Wi-Fi (IP address), `npm run preview` and other hosts nothing is sent; a preview of the email the owner would receive is shown instead. To test a real send to your own inbox, run the command below (both values are required; it works under `npm run dev` only).
   ```bash
   PUBLIC_INQUIRY_LIVE=true PUBLIC_INQUIRY_TO=you@example.com npm run dev
   ```
-- **Spam:** submissions that fill the hidden honeypot field are dropped.
-- **Files:** `src/components/InquirySection.astro` (markup), `src/lib/inquiry.ts` (validation, email format, sending), `src/lib/inquiry-form.ts` (browser behaviour); text lives under `inquiry.*` in `src/i18n/ui.ts`
+- **Spam:** submissions that fill the hidden honeypot field are dropped. The endpoint is public, though, so bots posting to it directly are not stopped. If spam grows, switch to the random alias FormSubmit gives after activation, or put a small server in front.
+- **Before launch:** ① right after deploy, submit once from the live site to complete activation ② check with the owner whether a personal-data collection notice (name, phone, email) is needed — the form has none today
+- **Files:** `src/components/InquirySection.astro` (markup), `src/lib/inquiry-config.ts` (fields, subject, recipient, production domain), `src/lib/inquiry.ts` (validation, email format, sending), `src/lib/inquiry-form.ts` (browser behaviour); text lives under `inquiry.*` in `src/i18n/ui.ts`
 
 ## Deployment
 

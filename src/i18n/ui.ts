@@ -68,7 +68,20 @@ export const ui = {
     'inquiry.status.sending': '보내는 중…',
     'inquiry.status.sent': '문의가 전송되었습니다.',
     'inquiry.status.error': '전송하지 못했습니다. 잠시 후 다시 시도하시거나 이메일로 보내주세요:',
-    'inquiry.status.dryRun': '로컬 테스트 모드라 실제로 보내지 않았습니다. 미리보기를 확인하세요.',
+    'inquiry.status.dryRun': '테스트 환경이라 실제로 보내지 않았습니다. 미리보기를 확인하세요.',
+    'inquiry.status.invalid': '입력한 내용을 확인해 주세요.',
+    'inquiry.status.pending': '문의가 접수되었습니다. 답변이 늦어지면 이메일로도 보내주세요:',
+
+    // Accessible names (read by screen readers, switched with the language)
+    'a11y.language': '언어',
+    'a11y.darkMode': '다크 모드',
+    'a11y.menu': '메뉴',
+    'a11y.mainNav': '주 메뉴',
+    'a11y.mobileNav': '모바일 메뉴',
+    'a11y.footerNav': '하단 메뉴',
+    'a11y.clearSearch': '검색어 지우기',
+    'a11y.close': '닫기',
+    'products.sortLabel': '정렬',
 
     // Footer
     'footer.company': '상호: 탑베큠 주식회사',
@@ -144,7 +157,20 @@ export const ui = {
     'inquiry.status.sending': 'Sending…',
     'inquiry.status.sent': 'Your inquiry has been sent.',
     'inquiry.status.error': 'We could not send it. Please try again later or email us:',
-    'inquiry.status.dryRun': 'Local test mode: nothing was sent. See the preview.',
+    'inquiry.status.dryRun': 'Test environment: nothing was sent. See the preview.',
+    'inquiry.status.invalid': 'Please check the highlighted fields.',
+    'inquiry.status.pending': "Your inquiry was received. If you don't hear back, please also email us:",
+
+    // Accessible names
+    'a11y.language': 'Language',
+    'a11y.darkMode': 'Dark mode',
+    'a11y.menu': 'Menu',
+    'a11y.mainNav': 'Main menu',
+    'a11y.mobileNav': 'Mobile menu',
+    'a11y.footerNav': 'Footer menu',
+    'a11y.clearSearch': 'Clear search',
+    'a11y.close': 'Close',
+    'products.sortLabel': 'Sort',
 
     // Footer
     'footer.company': 'Company: Top Vacuum Inc.',

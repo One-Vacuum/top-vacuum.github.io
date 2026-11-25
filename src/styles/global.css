@@ -32,8 +32,10 @@
     @apply text-[36px] sm:text-[48px] lg:text-[64px];
   }
 
+  /* The transparent outline is what forced-colors (high contrast) mode shows,
+     since it drops the box-shadow ring. */
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:focus-visible:ring-accent-light dark:focus-visible:ring-offset-night;
+    @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-transparent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:focus-visible:ring-accent-light dark:focus-visible:ring-offset-night;
   }
 
   .btn-primary {
@@ -70,7 +72,7 @@
   }
 
   .filter-btn {
-    @apply focus-ring h-10 px-4 rounded-lg text-sm font-semibold border border-line dark:border-night-line
+    @apply focus-ring h-10 px-4 rounded-lg text-sm font-semibold border border-line-strong dark:border-night-strong
            text-ink-soft dark:text-snow-soft hover:border-ink hover:text-ink
            dark:hover:border-snow dark:hover:text-snow transition-colors duration-200 cursor-pointer;
   }
@@ -80,34 +82,38 @@
   }
 
   .field {
-    @apply h-11 rounded-lg bg-white dark:bg-night-raised border border-line dark:border-night-line px-4 text-[15px]
+    @apply h-11 rounded-lg bg-white dark:bg-night-raised border border-line-strong dark:border-night-strong px-4 text-[15px]
            text-ink dark:text-snow placeholder:text-ink-mute dark:placeholder:text-snow-mute
            focus:outline-none focus:ring-2 focus:ring-accent dark:focus:ring-accent-light;
   }
 
-  /* Inquiry form controls. Borders are dark enough for 3:1 against the panel. */
+  /* Inquiry form controls. */
   .input {
-    @apply h-12 w-full rounded-[10px] border border-[#7F8D92] bg-white px-3.5 text-[15px] text-ink
-           placeholder:text-ink-mute focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30
-           aria-[invalid=true]:border-[#B42318]
-           dark:border-[#5A6D75] dark:bg-night dark:text-snow dark:placeholder:text-snow-mute
-           dark:focus:border-accent-light dark:focus:ring-accent-light/30 dark:aria-[invalid=true]:border-[#FDA29B];
+    @apply h-12 w-full rounded-[10px] border border-line-strong bg-white px-3.5 text-[15px] text-ink
+           placeholder:text-ink-mute focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-transparent
+           focus:border-accent focus:ring-2 focus:ring-accent read-only:bg-paper
+           aria-[invalid=true]:border-danger
+           dark:border-night-strong dark:bg-night dark:text-snow dark:placeholder:text-snow-mute
+           dark:focus:border-accent-light dark:focus:ring-accent-light dark:aria-[invalid=true]:border-danger-light;
   }
 
   .field-error {
-    @apply text-[13px] font-medium text-[#B42318] dark:text-[#FDA29B] empty:hidden;
+    @apply text-[13px] font-medium text-danger dark:text-danger-light empty:hidden;
   }
 
+  /* The status live region stays rendered when empty (sr-only, not hidden) so
+     screen readers announce what is written into it. */
   .inquiry-status {
-    @apply text-sm leading-relaxed text-ink-soft dark:text-snow-soft empty:hidden;
+    @apply text-sm leading-relaxed text-ink-soft dark:text-snow-soft empty:sr-only focus:outline-none;
   }
 
   .inquiry-status[data-state='sent'] {
     @apply font-semibold text-accent dark:text-accent-light;
   }
 
-  .inquiry-status[data-state='error'] {
-    @apply text-[#B42318] dark:text-[#FDA29B];
+  .inquiry-status[data-state='error'],
+  .inquiry-status[data-state='invalid'] {
+    @apply text-danger dark:text-danger-light;
   }
 
   /* Localhost-only preview of the email (see isDryRun in src/lib/inquiry.ts). */

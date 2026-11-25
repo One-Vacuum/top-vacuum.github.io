@@ -16,7 +16,14 @@ export default {
           mute: '#5E6B70', // tertiary text (5.1:1 on paper)
         },
         paper: '#F4F6F7', // contact card, product image wells
-        line: '#D8DFE1',
+        line: {
+          DEFAULT: '#D8DFE1', // dividers
+          strong: '#7F8D92', // form control borders (3:1 on white and paper)
+        },
+        danger: {
+          DEFAULT: '#B42318', // error text and borders
+          light: '#FDA29B', // the same on dark backgrounds
+        },
         accent: {
           DEFAULT: '#0B5D6B', // petrol: top strip, primary button, labels (7.5:1 with white)
           deep: '#084651', // hover on accent
@@ -27,6 +34,7 @@ export default {
           raised: '#111A1D',
           high: '#18242A',
           line: '#23323A',
+          strong: '#5A6D75', // form control borders in dark mode
         },
         snow: {
           DEFAULT: '#ECF1F2', // dark-mode text

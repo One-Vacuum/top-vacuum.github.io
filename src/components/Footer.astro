@@ -11,12 +11,12 @@ const t = ui.ko;
     <div class="flex flex-col gap-2">
       <span class="font-display text-xl font-extrabold tracking-[0.01em] text-ink dark:text-snow">TOP VACUUM</span>
       <p class="text-sm text-ink-mute dark:text-snow-mute" data-i18n="site.description" data-i18n-html set:html={t['site.description']}></p>
-      <nav class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold" aria-label="Footer">
-        <a href="#" class="focus-ring rounded-sm text-ink-soft hover:text-accent dark:text-snow-soft dark:hover:text-accent-light transition-colors" data-i18n="nav.home">{t['nav.home']}</a>
+      <nav class="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm font-semibold" aria-label={t['a11y.footerNav']} data-i18n-aria-label="a11y.footerNav">
+        <a href="#" class="focus-ring inline-block py-1 rounded-sm text-ink-soft hover:text-accent dark:text-snow-soft dark:hover:text-accent-light transition-colors" data-i18n="nav.home">{t['nav.home']}</a>
         {SHOW_PRODUCTS && (
-          <a href="#products" class="focus-ring rounded-sm text-ink-soft hover:text-accent dark:text-snow-soft dark:hover:text-accent-light transition-colors" data-i18n="nav.products">{t['nav.products']}</a>
+          <a href="#products" class="focus-ring inline-block py-1 rounded-sm text-ink-soft hover:text-accent dark:text-snow-soft dark:hover:text-accent-light transition-colors" data-i18n="nav.products">{t['nav.products']}</a>
         )}
-        <a href="#contact" class="focus-ring rounded-sm text-ink-soft hover:text-accent dark:text-snow-soft dark:hover:text-accent-light transition-colors" data-i18n="nav.contact">{t['nav.contact']}</a>
+        <a href="#contact" class="focus-ring inline-block py-1 rounded-sm text-ink-soft hover:text-accent dark:text-snow-soft dark:hover:text-accent-light transition-colors" data-i18n="nav.contact">{t['nav.contact']}</a>
       </nav>
     </div>
 

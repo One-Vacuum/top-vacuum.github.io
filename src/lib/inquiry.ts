@@ -1,103 +1,108 @@
 /**
- * "견적 · 기술 문의" form → email.
+ * Inquiry form → email. Identical in top-vacuum.github.io and
+ * one-vacuum.github.io — change both. Site-specific settings live in
+ * ./inquiry-config.ts.
  *
  * GitHub Pages only serves static files, so the form posts to FormSubmit
- * (https://formsubmit.co), a no-account form-to-email relay. The email layout
- * is built here so the owner gets the same clean, Korean-labelled message
- * every time; FormSubmit's `table` template renders `rows` as a two-column
- * table.
+ * (https://formsubmit.co), a no-account form-to-email relay. The owner gets a
+ * Korean-labelled table (FormSubmit `table` template) with a subject naming
+ * the sender and Reply-To set to the customer.
  *
- * First submission after deploy: FormSubmit emails the recipient an
- * "Activate Form" link once. Submissions are kept (30 days) until then and
- * delivered after activation, so an activation response is treated as
- * accepted. See README → "문의 양식".
+ * Until the recipient clicks FormSubmit's one-time "Activate Form" email, the
+ * API answers "This form needs Activation"; FormSubmit keeps those submissions
+ * (30 days) and delivers them after activation. See README → "문의 양식".
  */
+import { DEFAULT_RECIPIENT, INQUIRY_FIELDS, PRODUCTION_HOSTS, SUBJECT_PREFIX } from './inquiry-config';
 
 export type Lang = 'ko' | 'en';
 
-export interface InquiryInput {
-  company: string; // optional
+export interface InquiryFieldDef {
   name: string;
-  phone: string;
-  email: string;
-  model: string; // pump model · required pressure (optional)
-  message: string;
+  required: boolean;
+  maxLength: number;
+  /** Row label in the owner's email — always Korean, whatever the page language. */
+  emailLabel: string;
+  /** `ui.ts` key of the on-page label. */
+  labelKey: string;
+  control: 'input' | 'textarea';
+  type?: 'text' | 'tel' | 'email';
+  autocomplete?: string;
+  placeholderKey?: string;
+  /** Spans the full form width instead of half. */
+  wide?: boolean;
 }
 
-export type InquiryField = keyof InquiryInput;
+export type InquiryField = (typeof INQUIRY_FIELDS)[number]['name'];
+export type InquiryInput = Record<InquiryField, string>;
 export type InquiryError = 'required' | 'email' | 'phone' | 'tooLong';
 export type InquiryErrors = Partial<Record<InquiryField, InquiryError>>;
 
-/** Order of the fields in the form and of the rows in the email. */
-export const FIELD_ORDER: readonly InquiryField[] = ['company', 'name', 'phone', 'email', 'model', 'message'];
+const FIELDS: readonly InquiryFieldDef[] = INQUIRY_FIELDS;
+export const FIELD_ORDER = FIELDS.map((f) => f.name) as InquiryField[];
+export const MAX_LENGTH = Object.fromEntries(FIELDS.map((f) => [f.name, f.maxLength])) as Record<InquiryField, number>;
 
-export const REQUIRED_FIELDS: readonly InquiryField[] = ['name', 'phone', 'email', 'message'];
-
-export const MAX_LENGTH: Readonly<Record<InquiryField, number>> = {
-  company: 100,
-  name: 50,
-  phone: 30,
-  email: 254,
-  model: 200,
-  message: 5000,
-};
-
-/** Row labels as the owner reads them in the email (always Korean). */
-export const EMAIL_LABELS: Readonly<Record<InquiryField, string>> = {
-  company: '회사명',
-  name: '담당자/이름',
-  phone: '연락처',
-  email: '이메일',
-  model: '펌프 모델 · 필요 압력',
-  message: '문의 내용',
-};
-
-export const SUBJECT_PREFIX = '[탑베큠 홈페이지] 견적·기술 문의';
-export const DEFAULT_RECIPIENT = 'kynam@topvac.co.kr';
+export const SEND_TIMEOUT_MS = 15_000;
+/** Longest `mailto:` URL handed out; mail clients drop or cut longer ones. */
+export const MAILTO_MAX_LENGTH = 1800;
+/** Longest company/name text shown in the subject. */
+const SUBJECT_PART_MAX = 40;
 const EMPTY = '—';
+const TRUNCATED_NOTE = '…(내용이 길어 일부만 담았습니다)';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_CHARS_RE = /^[0-9+()\-.\s]+$/;
+// No whitespace, commas, semicolons, angle brackets, quotes or parentheses, so
+// a value can never become several Reply-To addresses.
+const EMAIL_RE = /^[^\s@,;<>()"[\]\\]+@[^\s@,;<>()"[\]\\]+\.[^\s@,;<>()"[\]\\]+$/;
 
-/** Trim every field; inside the message keep line breaks but drop trailing spaces. */
-export function normalizeInquiry(raw: Partial<Record<InquiryField, unknown>>): InquiryInput {
-  const text = (v: unknown) => (typeof v === 'string' ? v : '').trim();
-  return {
-    company: text(raw.company),
-    name: text(raw.name),
-    phone: text(raw.phone),
-    email: text(raw.email),
-    model: text(raw.model),
-    message: text(raw.message)
-      .replace(/\r\n?/g, '\n')
-      .split('\n')
-      .map((line) => line.trimEnd())
-      .join('\n'),
-  };
+/**
+ * Trim every field. Phone numbers are NFKC-normalised (full-width digits from
+ * a Korean IME become ASCII); multi-line fields keep line breaks but lose
+ * trailing spaces.
+ */
+export function normalizeInquiry(raw: Partial<Record<string, unknown>>): InquiryInput {
+  const out = {} as InquiryInput;
+  for (const f of FIELDS) {
+    const value = raw[f.name];
+    let text = (typeof value === 'string' ? value : '').trim();
+    if (f.type === 'tel') text = text.normalize('NFKC');
+    if (f.control === 'textarea') {
+      text = text
+        .replace(/\r\n?/g, '\n')
+        .split('\n')
+        .map((line) => line.trimEnd())
+        .join('\n');
+    }
+    out[f.name as InquiryField] = text;
+  }
+  return out;
 }
 
+/**
+ * Phone numbers only need 8–20 digits; anything around them (extensions,
+ * "내선", a name) is passed through for the owner to read.
+ */
 export function validateInquiry(input: InquiryInput): InquiryErrors {
   const errors: InquiryErrors = {};
-  for (const field of FIELD_ORDER) {
+  for (const f of FIELDS) {
+    const field = f.name as InquiryField;
     const value = input[field];
     if (!value) {
-      if (REQUIRED_FIELDS.includes(field)) errors[field] = 'required';
+      if (f.required) errors[field] = 'required';
       continue;
     }
-    if (value.length > MAX_LENGTH[field]) {
+    if (value.length > f.maxLength) {
       errors[field] = 'tooLong';
       continue;
     }
-    if (field === 'email' && !EMAIL_RE.test(value)) errors.email = 'email';
-    if (field === 'phone') {
+    if (f.type === 'email' && (!EMAIL_RE.test(value) || value.includes('..'))) errors[field] = 'email';
+    if (f.type === 'tel') {
       const digits = value.replace(/\D/g, '').length;
-      if (!PHONE_CHARS_RE.test(value) || digits < 8 || digits > 15) errors.phone = 'phone';
+      if (digits < 8 || digits > 20) errors[field] = 'phone';
     }
   }
   return errors;
 }
 
-/** "2026-11-25 19:30 (KST)" — fixed to Korea time regardless of the visitor's zone. */
+/** "2026-11-25 19:30 (KST)" — Korea time regardless of the visitor's zone. */
 export function formatKst(date: Date): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Seoul',
@@ -120,11 +125,16 @@ export interface InquiryEmail {
 }
 
 export function buildInquiryEmail(input: InquiryInput, opts: { now: Date; lang: Lang }): InquiryEmail {
-  const sender = input.company ? `${input.company} · ${input.name}` : input.name;
-  const rows: Array<[string, string]> = FIELD_ORDER.map((field) => [EMAIL_LABELS[field], input[field] || EMPTY]);
+  const part = (s: string) => {
+    const line = s.replace(/\s+/g, ' ');
+    return line.length > SUBJECT_PART_MAX ? `${line.slice(0, SUBJECT_PART_MAX)}…` : line;
+  };
+  const record = input as Record<string, string>;
+  const sender = record.company ? `${part(record.company)} · ${part(record.name)}` : part(record.name);
+  const rows: Array<[string, string]> = FIELDS.map((f) => [f.emailLabel, record[f.name] || EMPTY]);
   rows.push(['접수 시각', formatKst(opts.now)]);
   rows.push(['문의 언어', opts.lang === 'en' ? '영어 (English)' : '한국어']);
-  return { subject: `${SUBJECT_PREFIX} — ${sender}`, replyTo: input.email, rows };
+  return { subject: `${SUBJECT_PREFIX} — ${sender}`, replyTo: record.email, rows };
 }
 
 /** JSON body for FormSubmit's AJAX endpoint. Underscore keys are FormSubmit settings, not rows. */
@@ -147,32 +157,52 @@ export function toPlainText(mail: InquiryEmail): string {
     .join('\n');
 }
 
-export function mailtoHref(to: string, mail: InquiryEmail): string {
-  return `mailto:${to}?subject=${encodeURIComponent(mail.subject)}&body=${encodeURIComponent(toPlainText(mail))}`;
+/**
+ * Pre-filled `mailto:` link, kept under `maxLength` by shortening the longest
+ * row (normally the message). Line breaks are CRLF as RFC 6068 asks.
+ */
+export function mailtoHref(to: string, mail: InquiryEmail, maxLength = MAILTO_MAX_LENGTH): string {
+  const build = (m: InquiryEmail) =>
+    `mailto:${to}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(toPlainText(m).replace(/\n/g, '\r\n'))}`;
+  let href = build(mail);
+  if (href.length <= maxLength) return href;
+
+  const longest = mail.rows.reduce((best, row, i) => (row[1].length > mail.rows[best][1].length ? i : best), 0);
+  const full = mail.rows[longest][1];
+  let keep = full.length;
+  while (keep > 0 && href.length > maxLength) {
+    keep = Math.floor(keep * 0.8);
+    const rows = mail.rows.map((row, i): [string, string] => (i === longest ? [row[0], `${full.slice(0, keep)}\n${TRUNCATED_NOTE}`] : row));
+    href = build({ ...mail, rows });
+  }
+  return href;
 }
 
-type Env = Record<string, string | boolean | undefined>;
+export type InquiryEnv = { DEV?: boolean; PUBLIC_INQUIRY_TO?: string; PUBLIC_INQUIRY_LIVE?: string };
 
-/** `PUBLIC_INQUIRY_TO` overrides the recipient (e.g. to test with your own inbox). */
-export function inquiryRecipient(env: Env = import.meta.env): string {
-  const to = env.PUBLIC_INQUIRY_TO;
-  return typeof to === 'string' && to.trim() ? to.trim() : DEFAULT_RECIPIENT;
-}
+/** The env values the form reads, named one by one so no others reach the bundle. */
+export const inquiryEnv = (): InquiryEnv => ({
+  DEV: import.meta.env.DEV,
+  PUBLIC_INQUIRY_TO: import.meta.env.PUBLIC_INQUIRY_TO,
+  PUBLIC_INQUIRY_LIVE: import.meta.env.PUBLIC_INQUIRY_LIVE,
+});
 
-export function formSubmitEndpoint(to: string): string {
-  return `https://formsubmit.co/ajax/${to}`;
-}
+const devOverride = (env: InquiryEnv) =>
+  (env.DEV === true && typeof env.PUBLIC_INQUIRY_TO === 'string' && env.PUBLIC_INQUIRY_TO.trim()) || null;
 
-export function isLocalHostname(hostname: string): boolean {
-  return ['localhost', '127.0.0.1', '::1', '[::1]'].includes(hostname) || hostname.endsWith('.localhost');
+/** `PUBLIC_INQUIRY_TO` redirects mail during `astro dev` only; production builds always mail the owner. */
+export function inquiryRecipient(env: InquiryEnv): string {
+  return devOverride(env) ?? DEFAULT_RECIPIENT;
 }
 
 /**
- * On localhost nothing is sent unless `PUBLIC_INQUIRY_LIVE=true`; the form shows
- * a preview of the email instead, so local testing never mails the owner.
+ * Real sends happen only on PRODUCTION_HOSTS, or in `astro dev` with both
+ * `PUBLIC_INQUIRY_LIVE=true` and a `PUBLIC_INQUIRY_TO` address. Everywhere else
+ * (localhost, LAN IPs, tunnels, preview builds) the form shows a preview.
  */
-export function isDryRun(hostname: string, env: Env = import.meta.env): boolean {
-  return isLocalHostname(hostname) && env.PUBLIC_INQUIRY_LIVE !== 'true';
+export function isDryRun(hostname: string, env: InquiryEnv): boolean {
+  if (PRODUCTION_HOSTS.includes(hostname.toLowerCase())) return false;
+  return !(env.PUBLIC_INQUIRY_LIVE === 'true' && devOverride(env));
 }
 
 export class InquirySendError extends Error {
@@ -187,23 +217,46 @@ export type SendResult = 'sent' | 'pending-activation';
 export async function sendInquiry(
   endpoint: string,
   payload: Record<string, string>,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: typeof fetch,
+  signal?: AbortSignal,
 ): Promise<SendResult> {
-  const res = await fetchImpl(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  let data: { success?: unknown; message?: unknown } | null = null;
+  let res: Response;
+  let data: { success?: unknown; message?: unknown } | null;
   try {
-    data = await res.json();
-  } catch {
-    data = null;
+    res = await fetchImpl(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+      signal,
+    });
+    data = await res.json().catch(() => null);
+  } catch (error) {
+    if (signal?.aborted) throw new InquirySendError('Timed out');
+    throw error;
   }
   if (!res.ok) throw new InquirySendError(`HTTP ${res.status}`);
   if (String(data?.success) === 'true') return 'sent';
-  // The form has not been activated yet: FormSubmit keeps the submission and
-  // delivers it once the owner clicks "Activate Form".
-  if (/activat/i.test(String(data?.message ?? ''))) return 'pending-activation';
+  // Only FormSubmit's exact "needs activation" reply; any other refusal
+  // (deactivated, blocked, …) is an error.
+  if (/needs activation/i.test(String(data?.message ?? ''))) return 'pending-activation';
   throw new InquirySendError(String(data?.message ?? 'Unexpected response'));
+}
+
+/** Send the email through FormSubmit, aborting after `timeoutMs`. */
+export async function deliverInquiry(
+  mail: InquiryEmail,
+  opts: { to: string; pageUrl: string; fetchImpl: typeof fetch; timeoutMs?: number },
+): Promise<SendResult> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? SEND_TIMEOUT_MS);
+  try {
+    return await sendInquiry(
+      `https://formsubmit.co/ajax/${opts.to}`,
+      toFormSubmitPayload(mail, opts.pageUrl),
+      opts.fetchImpl,
+      controller.signal,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
 }

@@ -1,4 +1,8 @@
-<div class="flex items-center gap-0.5 rounded-lg bg-paper dark:bg-night-high p-1" role="group" aria-label="Language">
-  <button id="btnKO" type="button" class="lang-btn lang-active" aria-pressed="true" lang="ko" aria-label="한국어">KO</button>
-  <button id="btnEN" type="button" class="lang-btn" aria-pressed="false" lang="en" aria-label="English">EN</button>
+---
+import { ui } from '../i18n/ui';
+---
+
+<div class="flex items-center gap-0.5 rounded-lg bg-paper dark:bg-night-high p-1" role="group" aria-label={ui.ko['a11y.language']} data-i18n-aria-label="a11y.language">
+  <button id="btnKO" type="button" class="lang-btn lang-active" aria-pressed="true" lang="ko">KO</button>
+  <button id="btnEN" type="button" class="lang-btn" aria-pressed="false" lang="en">EN</button>
 </div>

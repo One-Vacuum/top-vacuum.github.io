@@ -2,9 +2,9 @@
 import { ui } from '../i18n/ui';
 import { SHOW_PRODUCTS } from '../lib/features';
 
+import { CONTACT, mailHref, telHref } from '../lib/contact';
+
 const t = ui.ko;
-const phoneHref = 'tel:' + t['contact.phoneValue'].replace(/[^0-9+]/g, '');
-const mobileHref = 'tel:' + t['contact.mobileValue'].replace(/[^0-9+]/g, '');
 ---
 
 <section class="container-custom pt-16 pb-20 md:pt-24 md:pb-28 lg:min-h-[640px] flex flex-col lg:flex-row lg:items-end gap-12 lg:gap-16">
@@ -41,15 +41,15 @@ const mobileHref = 'tel:' + t['contact.mobileValue'].replace(/[^0-9+]/g, '');
     <h2 id="contact-title" class="text-[15px] font-bold text-ink dark:text-snow" data-i18n="contact.title">{t['contact.title']}</h2>
     <div class="flex flex-col gap-0.5">
       <span class="text-[13px] text-ink-mute dark:text-snow-mute" data-i18n="contact.phone">{t['contact.phone']}</span>
-      <a href={phoneHref} class="focus-ring self-start rounded-sm font-display text-[28px] md:text-[30px] font-bold tracking-[-0.01em] text-ink dark:text-snow hover:text-accent dark:hover:text-accent-light transition-colors" data-i18n="contact.phoneValue">{t['contact.phoneValue']}</a>
+      <a href={telHref(CONTACT.phone)} class="focus-ring self-start rounded-sm font-display text-[28px] md:text-[30px] font-bold tracking-[-0.01em] text-ink dark:text-snow hover:text-accent dark:hover:text-accent-light transition-colors" data-i18n="contact.phoneValue">{t['contact.phoneValue']}</a>
     </div>
     <div class="flex flex-col gap-0.5">
       <span class="text-[13px] text-ink-mute dark:text-snow-mute" data-i18n="contact.mobile">{t['contact.mobile']}</span>
-      <a href={mobileHref} class="focus-ring self-start rounded-sm font-display text-[22px] font-semibold text-ink dark:text-snow hover:text-accent dark:hover:text-accent-light transition-colors" data-i18n="contact.mobileValue">{t['contact.mobileValue']}</a>
+      <a href={telHref(CONTACT.mobile)} class="focus-ring self-start rounded-sm font-display text-[22px] font-semibold text-ink dark:text-snow hover:text-accent dark:hover:text-accent-light transition-colors" data-i18n="contact.mobileValue">{t['contact.mobileValue']}</a>
     </div>
     <div class="flex flex-col gap-0.5">
       <span class="text-[13px] text-ink-mute dark:text-snow-mute" data-i18n="contact.email">{t['contact.email']}</span>
-      <a href="mailto:kynam@topvac.co.kr" class="focus-ring self-start rounded-sm font-display text-[18px] font-semibold text-ink dark:text-snow hover:text-accent dark:hover:text-accent-light transition-colors break-all" data-i18n="contact.emailValue">{t['contact.emailValue']}</a>
+      <a href={mailHref(CONTACT.email)} class="focus-ring self-start rounded-sm font-display text-[18px] font-semibold text-ink dark:text-snow hover:text-accent dark:hover:text-accent-light transition-colors break-all" data-i18n="contact.emailValue">{t['contact.emailValue']}</a>
     </div>
     <div class="pt-4 border-t border-line dark:border-night-line flex flex-col gap-0.5">
       <span class="text-[13px] text-ink-mute dark:text-snow-mute" data-i18n="contact.address">{t['contact.address']}</span>

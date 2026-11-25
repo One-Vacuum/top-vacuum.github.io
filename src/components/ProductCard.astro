@@ -29,6 +29,8 @@ const { partNumber, nameKo, nameEn, image, price, rawPrice, category, descriptio
         <img
           src={image}
           alt={nameKo}
+          data-alt-ko={nameKo}
+          data-alt-en={nameEn}
           class="w-full h-full object-contain p-4"
           onerror="this.src='/images/placeholder-product.svg'"
           loading="lazy"

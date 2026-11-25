@@ -3,8 +3,9 @@ import LanguageSwitcher from './LanguageSwitcher.astro';
 import { ui } from '../i18n/ui';
 import { SHOW_PRODUCTS } from '../lib/features';
 
+import { CONTACT, mailHref, telHref } from '../lib/contact';
+
 const t = ui.ko;
-const phoneHref = 'tel:' + t['contact.phoneValue'].replace(/[^0-9+]/g, '');
 ---
 
 <!-- Top strip (scrolls away; the header below stays sticky) -->
@@ -12,9 +13,9 @@ const phoneHref = 'tel:' + t['contact.phoneValue'].replace(/[^0-9+]/g, '');
   <div class="container-custom flex items-center justify-between gap-4 py-2.5">
     <span class="font-semibold" data-i18n="strip.label">{t['strip.label']}</span>
     <span class="hidden sm:inline-flex items-center gap-2 font-display font-medium">
-      <a href={phoneHref} class="hover:underline underline-offset-2" data-i18n="contact.phoneValue">{t['contact.phoneValue']}</a>
+      <a href={telHref(CONTACT.phone)} class="hover:underline underline-offset-2" data-i18n="contact.phoneValue">{t['contact.phoneValue']}</a>
       <span aria-hidden="true">·</span>
-      <a href="mailto:kynam@topvac.co.kr" class="hover:underline underline-offset-2" data-i18n="contact.emailValue">{t['contact.emailValue']}</a>
+      <a href={mailHref(CONTACT.email)} class="hover:underline underline-offset-2" data-i18n="contact.emailValue">{t['contact.emailValue']}</a>
     </span>
   </div>
 </div>
@@ -23,13 +24,13 @@ const phoneHref = 'tel:' + t['contact.phoneValue'].replace(/[^0-9+]/g, '');
   <div class="container-custom">
     <div class="flex items-center justify-between gap-4 h-16 md:h-[76px]">
       <!-- Wordmark -->
-      <a href="/" class="focus-ring flex items-center gap-3.5 rounded-sm" aria-label="Top Vacuum Inc.">
+      <a href="/" class="focus-ring flex items-center gap-3.5 rounded-sm">
         <span class="font-display text-[19px] md:text-[23px] font-extrabold tracking-[0.01em] text-ink dark:text-snow">TOP VACUUM</span>
         <span class="hidden sm:inline border-l border-line dark:border-night-line pl-3.5 text-[13px] font-semibold text-ink-mute dark:text-snow-mute">탑베큠 주식회사</span>
       </a>
 
       <!-- Navigation -->
-      <nav class="hidden md:flex items-center gap-1 text-[15px] font-semibold" aria-label="Main">
+      <nav class="hidden md:flex items-center gap-1 text-[15px] font-semibold" aria-label={t['a11y.mainNav']} data-i18n-aria-label="a11y.mainNav">
         {SHOW_PRODUCTS && (
           <a href="#products" class="nav-link" data-i18n="nav.products">{t['nav.products']}</a>
         )}
@@ -47,7 +48,7 @@ const phoneHref = 'tel:' + t['contact.phoneValue'].replace(/[^0-9+]/g, '');
         <LanguageSwitcher />
 
         <!-- Theme Toggle: icon follows the `dark` class, no JS swap needed -->
-        <button id="theme-toggle" type="button" class="icon-btn" aria-label="Toggle theme">
+        <button id="theme-toggle" type="button" class="icon-btn" aria-pressed="false" aria-label={t['a11y.darkMode']} data-i18n-aria-label="a11y.darkMode">
           <svg class="w-[18px] h-[18px] dark:hidden" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="4" />
             <path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4" />
@@ -58,7 +59,7 @@ const phoneHref = 'tel:' + t['contact.phoneValue'].replace(/[^0-9+]/g, '');
         </button>
 
         <!-- Mobile Menu Button -->
-        <button id="mobile-menu-btn" type="button" class="icon-btn md:hidden" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu">
+        <button id="mobile-menu-btn" type="button" class="icon-btn md:hidden" aria-label={t['a11y.menu']} data-i18n-aria-label="a11y.menu" aria-expanded="false" aria-controls="mobile-menu">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 7h16M4 12h16M4 17h16" />
           </svg>
@@ -67,7 +68,7 @@ const phoneHref = 'tel:' + t['contact.phoneValue'].replace(/[^0-9+]/g, '');
     </div>
 
     <!-- Mobile Navigation -->
-    <nav id="mobile-menu" class="hidden md:hidden pb-4" aria-label="Mobile">
+    <nav id="mobile-menu" class="hidden md:hidden pb-4" aria-label={t['a11y.mobileNav']} data-i18n-aria-label="a11y.mobileNav">
       <div class="flex flex-col gap-1 text-base font-semibold">
         {SHOW_PRODUCTS && (
           <a href="#products" class="nav-link py-3" data-i18n="nav.products">{t['nav.products']}</a>
@@ -100,9 +101,12 @@ const phoneHref = 'tel:' + t['contact.phoneValue'].replace(/[^0-9+]/g, '');
     });
   });
 
-  // Theme toggle (default: light). The sun/moon icons switch via `dark:` classes.
+  // Theme toggle (default: light). The sun/moon icons switch via `dark:` classes;
+  // aria-pressed tells assistive tech whether dark mode is on.
   const themeToggle = document.getElementById('theme-toggle');
+  themeToggle?.setAttribute('aria-pressed', String(document.documentElement.classList.contains('dark')));
   themeToggle?.addEventListener('click', () => {
-    document.documentElement.classList.toggle('dark');
+    const dark = document.documentElement.classList.toggle('dark');
+    themeToggle.setAttribute('aria-pressed', String(dark));
   });
 </script>
