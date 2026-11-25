@@ -1,16 +1,11 @@
 /**
- * Inquiry form → email. Identical in top-vacuum.github.io and
- * one-vacuum.github.io — change both. Site-specific settings live in
- * ./inquiry-config.ts.
+ * Inquiry form → email. Shared: identical in both site repos (change both);
+ * site settings live in ./inquiry-config.ts.
  *
- * GitHub Pages only serves static files, so the form posts to FormSubmit
- * (https://formsubmit.co), a no-account form-to-email relay. The owner gets a
- * Korean-labelled table (FormSubmit `table` template) with a subject naming
- * the sender and Reply-To set to the customer.
- *
- * Until the recipient clicks FormSubmit's one-time "Activate Form" email, the
- * API answers "This form needs Activation"; FormSubmit keeps those submissions
- * (30 days) and delivers them after activation. See README → "문의 양식".
+ * GitHub Pages is static, so the form posts to FormSubmit (https://formsubmit.co),
+ * a no-account form-to-email relay. Until the recipient clicks its one-time
+ * "Activate Form" email it answers "This form needs Activation" and holds
+ * submissions for 30 days. See README → "문의 양식".
  */
 import type { Lang } from '../i18n/client';
 import { DEFAULT_RECIPIENT, INQUIRY_FIELDS, PRODUCTION_HOSTS, SUBJECT_PREFIX } from './inquiry-config';
@@ -52,32 +47,27 @@ const SUBJECT_PART_MAX = 40;
 const EMPTY = '—';
 const TRUNCATED_NOTE = '…(내용이 길어 일부만 담았습니다)';
 
-/** First `max` characters, counted in code points so an emoji is never cut in half
- * (a lone surrogate makes encodeURIComponent throw). */
+/** First `max` code points, so an emoji is never cut in half (encodeURIComponent throws on one). */
 const clip = (s: string, max: number) => Array.from(s).slice(0, max).join('');
 
 // No whitespace, commas, semicolons, angle brackets, quotes or parentheses, so
 // a value can never become several Reply-To addresses.
 const EMAIL_RE = /^[^\s@,;<>()"[\]\\]+@[^\s@,;<>()"[\]\\]+\.[^\s@,;<>()"[\]\\]+$/;
 
-// Control characters (line breaks are handled per field below) and bidi
-// marks, overrides and isolates that could disguise the subject.
+// Control characters and bidi controls that could disguise the subject.
 const UNSAFE_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
-// Every line-break form, including NEL and the Unicode line/paragraph separators.
+// CRLF, CR, LF, NEL and the Unicode line/paragraph separators.
 const LINE_BREAKS = /\r\n|[\r\n\u0085\u2028\u2029]/g;
-// Invisible characters pasted from web pages and PDFs. Removed from email
-// addresses (a reply to one would bounce); elsewhere a value made only of
-// them counts as empty. U+200C/U+200D stay in text: emoji sequences use them.
+// Invisible characters from copy-paste. Stripped from the email (replies would
+// bounce); elsewhere only a value made of nothing else is cleared (emoji use U+200C/D).
 const INVISIBLE = /[\u00AD\u180E\u200B-\u200D\u2060-\u2064\uFEFF]/g;
 /** Keeps surrogate pairs (emoji) and drops lone halves, which encodeURIComponent rejects. */
 const dropLoneSurrogates = (s: string) => s.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDFFF]/g, (m) => (m.length === 2 ? m : ''));
 
 /**
- * Trim every field and drop unsafe characters. Phone numbers are
- * NFKC-normalised (full-width digits from a Korean IME become ASCII);
- * multi-line fields keep line breaks but lose trailing spaces; single-line
- * fields have line breaks turned into spaces. A value of only invisible
- * characters counts as empty.
+ * Trim and clean every field. Phones are NFKC-normalised (full-width IME digits
+ * become ASCII); the message keeps line breaks, other fields get spaces; a value
+ * of only invisible characters is empty.
  */
 export function normalizeInquiry(raw: Partial<Record<string, unknown>>): InquiryInput {
   const out = {} as InquiryInput;
@@ -151,8 +141,7 @@ export function buildInquiryEmail(input: InquiryInput, opts: { now: Date; lang: 
     const clipped = clip(line, SUBJECT_PART_MAX);
     return clipped === line ? line : `${clipped}…`;
   };
-  // name and email are typed (RequiredFields below fails `npm run check` if a
-  // site drops them); company is optional, so it is read by name.
+  // A site may have no company field, so it is read untyped.
   const company = (input as Partial<Record<string, string>>).company;
   const sender = company ? `${part(company)} · ${part(input.name)}` : part(input.name);
   const rows: Array<[string, string]> = FIELDS.map((f) => [f.emailLabel, input[f.name as InquiryField] || EMPTY]);
@@ -182,9 +171,8 @@ export function toPlainText(mail: InquiryEmail): string {
 }
 
 /**
- * Pre-filled `mailto:` link, kept under `maxLength` by repeatedly shortening
- * whichever row is longest; if even that cannot fit, the body is just a note.
- * Line breaks are CRLF as RFC 6068 asks.
+ * Pre-filled `mailto:` link under `maxLength`: the longest row is shortened until
+ * it fits, else the body is just a note. CRLF line breaks (RFC 6068).
  */
 export function mailtoHref(to: string, mail: InquiryEmail, maxLength = MAILTO_MAX_LENGTH): string {
   const build = (subject: string, body: string) =>
@@ -208,10 +196,7 @@ export function mailtoHref(to: string, mail: InquiryEmail, maxLength = MAILTO_MA
 
 export type InquiryEnv = { DEV?: boolean; PUBLIC_INQUIRY_TO?: string; PUBLIC_INQUIRY_LIVE?: string };
 
-/**
- * The env values the form reads, named one by one so no others reach the
- * bundle; the test overrides are compiled out of production builds entirely.
- */
+/** Env values the form reads, named singly so no others reach the bundle; dev overrides compile out of production. */
 export const inquiryEnv = (): InquiryEnv => ({
   DEV: import.meta.env.DEV,
   PUBLIC_INQUIRY_TO: import.meta.env.DEV ? import.meta.env.PUBLIC_INQUIRY_TO : undefined,
@@ -229,11 +214,7 @@ export function inquiryRecipient(env: InquiryEnv): string {
   return devOverride(env) ?? DEFAULT_RECIPIENT;
 }
 
-/**
- * Real sends happen only on PRODUCTION_HOSTS, or in `astro dev` with both
- * `PUBLIC_INQUIRY_LIVE=true` and a `PUBLIC_INQUIRY_TO` address. Everywhere else
- * (localhost, LAN IPs, tunnels, preview builds) the form shows a preview.
- */
+/** Preview unless on PRODUCTION_HOSTS, or in `astro dev` with `PUBLIC_INQUIRY_LIVE=true` and a `PUBLIC_INQUIRY_TO`. */
 export function isDryRun(hostname: string, env: InquiryEnv): boolean {
   if (PRODUCTION_HOSTS.includes(hostname.toLowerCase().replace(/\.$/, ''))) return false;
   return !(env.PUBLIC_INQUIRY_LIVE === 'true' && devOverride(env));

@@ -94,8 +94,8 @@ const t = ui.ko;
     menuBtn.setAttribute('aria-expanded', String(open));
   });
 
-  // Hiding the menu would drop focus from the tapped link, so focus moves to
-  // the section it points to (the browser still does the scrolling).
+  // Hiding the menu drops focus from the tapped link, so focus its target section
+  // (the browser still scrolls).
   mobileMenu?.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((link) => {
     link.addEventListener('click', () => {
       const target = document.getElementById(link.hash.slice(1));
@@ -114,8 +114,7 @@ const t = ui.ko;
     });
   });
 
-  // Theme toggle (default: light). The sun/moon icons switch via `dark:` classes;
-  // aria-pressed tells assistive tech whether dark mode is on.
+  // Theme toggle (default light): icons swap via `dark:`; aria-pressed reports the state.
   const themeToggle = document.getElementById('theme-toggle');
   themeToggle?.setAttribute('aria-pressed', String(document.documentElement.classList.contains('dark')));
   themeToggle?.addEventListener('click', () => {

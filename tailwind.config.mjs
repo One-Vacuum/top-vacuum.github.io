@@ -12,7 +12,7 @@ export default {
       colors: {
         ink: {
           DEFAULT: '#0B1416', // text, wordmark
-          soft: '#3E4A4F', // secondary text (9.5:1 on white)
+          soft: '#3E4A4F', // secondary text (9.1:1 on white)
           mute: '#5E6B70', // tertiary text (5.1:1 on paper)
         },
         paper: '#F4F6F7', // contact card, product image wells

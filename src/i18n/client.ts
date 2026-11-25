@@ -1,7 +1,6 @@
 /**
- * Browser-side i18n: the KO/EN switch and helpers for scripts that insert
- * text at runtime. Identical in top-vacuum.github.io and one-vacuum.github.io
- * — change both.
+ * Browser-side i18n: the KO/EN switch and runtime text helpers. Shared:
+ * identical in both site repos (change both).
  *
  * The page language lives on `<html lang>`. Elements tagged with the
  * attributes below are re-translated by `applyLang()` on every switch:
@@ -16,7 +15,7 @@ export type UiKey = keyof (typeof ui)['ko'];
 
 export const currentLang = (): Lang => (document.documentElement.lang === 'en' ? 'en' : 'ko');
 
-// Own keys only, so markup like data-i18n="constructor" cannot reach Object.prototype.
+// Own keys only: data-i18n="constructor" must not reach Object.prototype.
 const own = (lang: Lang, key: string) => (Object.prototype.hasOwnProperty.call(ui[lang], key) ? ui[lang][key as UiKey] : '');
 
 /** Korean is the fallback for a missing or empty translation. */
@@ -28,11 +27,7 @@ export function setI18nText(el: HTMLElement, key: UiKey) {
   el.textContent = translate(key);
 }
 
-/**
- * Switch every tagged element on the page to `lang`. Only keys listed in
- * `htmlKeys` (constant strings from ui.ts that contain markup) are written as
- * HTML; everything else is text.
- */
+/** Switch every tagged element to `lang`. Only `htmlKeys` (constant ui.ts strings with markup) are written as HTML. */
 export function applyLang(lang: Lang, opts: { htmlKeys?: ReadonlySet<string>; root?: Document } = {}) {
   const root = opts.root ?? document;
   root.documentElement.lang = lang;

@@ -101,8 +101,7 @@
     @apply text-[13px] font-medium text-danger dark:text-danger-light empty:hidden;
   }
 
-  /* The status live region stays rendered when empty (sr-only, not hidden) so
-     screen readers announce what is written into it. */
+  /* Rendered even when empty (sr-only, not hidden) so screen readers announce updates. */
   .inquiry-status {
     @apply text-sm leading-relaxed text-ink-soft dark:text-snow-soft empty:sr-only focus:outline-none;
   }

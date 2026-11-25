@@ -1,10 +1,7 @@
 /**
- * Browser side of the inquiry form: validation messages, sending states and
- * the preview shown instead of sending off production. Identical in
- * top-vacuum.github.io and one-vacuum.github.io — change both.
- *
- * Messages are written with `data-i18n` (setI18nText), so the KO/EN switch
- * re-translates them in place.
+ * Browser side of the inquiry form: validation messages, sending states and the
+ * off-production preview. Shared: identical in both site repos (change both).
+ * Messages carry `data-i18n`, so the KO/EN switch re-translates them.
  */
 import { currentLang, setI18nText, type UiKey } from '../i18n/client';
 import {
@@ -27,7 +24,7 @@ import {
 
 export type InquiryStatus = 'invalid' | 'sending' | 'sent' | 'pending' | 'error' | 'dryRun';
 
-/** ui.ts keys for every message the form can show (type-checked against ui.ts). */
+/** ui.ts key for every message the form can show. */
 export const STATUS_KEYS: Readonly<Record<InquiryStatus, UiKey>> = {
   invalid: 'inquiry.status.invalid',
   sending: 'inquiry.status.sending',
@@ -57,7 +54,7 @@ export interface InquiryFormOptions {
 type FieldControl = HTMLInputElement | HTMLTextAreaElement;
 
 export function mountInquiryForm(form: HTMLFormElement, options: InquiryFormOptions = {}) {
-  // A second mount would bind a second submit handler and send twice.
+  // Mounting twice would send every inquiry twice.
   if (form.dataset.inquiryMounted === 'true') return;
   form.dataset.inquiryMounted = 'true';
   const fetchImpl = options.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
@@ -117,9 +114,8 @@ export function mountInquiryForm(form: HTMLFormElement, options: InquiryFormOpti
     }
   }
 
-  // aria-disabled rather than `disabled`: disabling the focused button would
-  // drop keyboard focus. Fields go read-only so nothing typed meanwhile is
-  // lost when the form resets.
+  // aria-disabled, not `disabled`, so the focused button keeps focus. Read-only
+  // fields stop typing that the reset would discard.
   function setSending(on: boolean) {
     sending = on;
     submit?.setAttribute('aria-disabled', String(on));
@@ -134,8 +130,7 @@ export function mountInquiryForm(form: HTMLFormElement, options: InquiryFormOpti
   form.addEventListener('input', (event) => {
     const field = (event.target as FieldControl | null)?.name as InquiryField | undefined;
     if (field && FIELD_ORDER.includes(field) && control(field)?.getAttribute('aria-invalid') === 'true') clearError(field);
-    // A finished send's message no longer applies once a new inquiry starts,
-    // and "check the fields" goes once no field is flagged.
+    // Clear a finished outcome once a new inquiry starts, and "check the fields" once nothing is flagged.
     const state = status?.dataset.state ?? '';
     if (['sent', 'pending', 'dryRun'].includes(state)) setStatus(null);
     if (state === 'invalid' && !form.querySelector('[aria-invalid="true"]')) setStatus(null);
@@ -179,8 +174,7 @@ export function mountInquiryForm(form: HTMLFormElement, options: InquiryFormOpti
       setSending(false);
     }
 
-    // The outcome is shown outside the try above, so a display problem can
-    // never be reported as a failed send.
+    // Shown outside the try, so a display error is never reported as a failed send.
     if (result === 'preview') {
       setStatus('dryRun');
       try {

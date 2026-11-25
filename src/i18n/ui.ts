@@ -15,8 +15,7 @@ export const ui = {
     'nav.contact': '연락처',
     'nav.leybold': '라이볼트',
 
-    // Hero — headline and eyebrow are rearranged from the existing copy
-    // (site.description and the company names); no new claims.
+    // Hero — headline and eyebrow reuse existing copy (site.description, company names)
     'hero.eyebrow': 'Top Vacuum Inc. · 탑베큠 주식회사',
     'hero.headline': 'Leybold(라이볼트)<br>한국 공식 대리점',
     'hero.description': '<a href="https://www.leybold.com/ko-kr" target="_blank" rel="noopener" class="font-semibold text-accent dark:text-accent-light underline underline-offset-2">Leybold(라이볼트)</a> 한국 공식 대리점으로서 진공펌프 및 부품을 전문으로 취급합니다. 다양한 산업 분야에 최적화된 진공 솔루션을 제공합니다.',
@@ -49,7 +48,7 @@ export const ui = {
     'contact.mobile': '휴대폰',
     'contact.mobileValue': CONTACT.mobile,
 
-    // Inquiry form (견적 · 기술 문의) — section copy as approved in the design review
+    // Inquiry form (견적 · 기술 문의) — heading and lead are user-approved copy (CLAUDE.md Copy rule)
     'cta.inquiry': '문의하기',
     'inquiry.title': '견적 · 기술 문의',
     'inquiry.lead': '펌프 모델, 필요한 압력, 수량을 함께 적어주시면 정확한 견적을 드릴 수 있습니다.',

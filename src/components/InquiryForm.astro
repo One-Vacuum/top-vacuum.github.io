@@ -1,13 +1,10 @@
 ---
-// Inquiry form + preview dialog, i.e. the markup src/lib/inquiry-form.ts
-// binds to. Identical in top-vacuum.github.io and one-vacuum.github.io —
-// change both. Fields come from INQUIRY_FIELDS (src/lib/inquiry-config.ts).
-// Each site wraps this in its own section and must provide, under these
-// names (Tailwind drops unknown classes silently):
+// Inquiry form + preview dialog that src/lib/inquiry-form.ts binds to. Shared:
+// identical in both site repos (change both). Fields: INQUIRY_FIELDS.
+// Each site must define these names (Tailwind drops unknown classes silently):
 // - global.css: `.input`, `.field-error`, `.inquiry-status`, `.inquiry-preview`,
 //   `.inquiry-preview-label`, `.btn-primary`, `.icon-btn`
-// - tailwind.config.mjs colours: `ink` (+ `mute`), `snow` (+ `mute`), `line`,
-//   `night` (`line`)
+// - colours: `ink`, `ink-mute`, `snow`, `snow-mute`, `line`, `night-line`
 import { ui } from '../i18n/ui';
 import { INQUIRY_FIELDS } from '../lib/inquiry-config';
 
