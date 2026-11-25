@@ -33,6 +33,10 @@ export interface InquiryFieldDef {
 
 export type InquiryField = (typeof INQUIRY_FIELDS)[number]['name'];
 export type InquiryInput = Record<InquiryField, string>;
+/** The subject and Reply-To need these two fields in every site's INQUIRY_FIELDS. */
+type RequiredFields = 'name' | 'email';
+const _requiredFieldsPresent: RequiredFields extends InquiryField ? true : never = true;
+void _requiredFieldsPresent;
 export type InquiryError = 'required' | 'email' | 'phone' | 'tooLong';
 export type InquiryErrors = Partial<Record<InquiryField, InquiryError>>;
 
@@ -57,8 +61,14 @@ const clip = (s: string, max: number) => Array.from(s).slice(0, max).join('');
 const EMAIL_RE = /^[^\s@,;<>()"[\]\\]+@[^\s@,;<>()"[\]\\]+\.[^\s@,;<>()"[\]\\]+$/;
 
 // Control characters (line breaks are handled per field below) and bidi
-// overrides that could disguise the subject.
-const UNSAFE_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g;
+// marks, overrides and isolates that could disguise the subject.
+const UNSAFE_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
+// Every line-break form, including NEL and the Unicode line/paragraph separators.
+const LINE_BREAKS = /\r\n|[\r\n\u0085\u2028\u2029]/g;
+// Invisible characters pasted from web pages and PDFs. Removed from email
+// addresses (a reply to one would bounce); elsewhere a value made only of
+// them counts as empty. U+200C/U+200D stay in text: emoji sequences use them.
+const INVISIBLE = /[\u00AD\u180E\u200B-\u200D\u2060-\u2064\uFEFF]/g;
 /** Keeps surrogate pairs (emoji) and drops lone halves, which encodeURIComponent rejects. */
 const dropLoneSurrogates = (s: string) => s.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDFFF]/g, (m) => (m.length === 2 ? m : ''));
 
@@ -66,22 +76,22 @@ const dropLoneSurrogates = (s: string) => s.replace(/[\uD800-\uDBFF][\uDC00-\uDF
  * Trim every field and drop unsafe characters. Phone numbers are
  * NFKC-normalised (full-width digits from a Korean IME become ASCII);
  * multi-line fields keep line breaks but lose trailing spaces; single-line
- * fields have line breaks turned into spaces.
+ * fields have line breaks turned into spaces. A value of only invisible
+ * characters counts as empty.
  */
 export function normalizeInquiry(raw: Partial<Record<string, unknown>>): InquiryInput {
   const out = {} as InquiryInput;
   for (const f of FIELDS) {
     const value = raw[f.name];
-    let text = dropLoneSurrogates(typeof value === 'string' ? value : '').replace(UNSAFE_CHARS, '').trim();
-    if (f.control !== 'textarea') text = text.replace(/[\r\n]+/g, ' ');
+    let text = dropLoneSurrogates(typeof value === 'string' ? value : '')
+      .replace(LINE_BREAKS, '\n')
+      .replace(UNSAFE_CHARS, '');
+    if (f.control !== 'textarea') text = text.replace(/\n+/g, ' ');
+    if (f.type === 'email') text = text.replace(INVISIBLE, '');
     if (f.type === 'tel') text = text.normalize('NFKC');
-    if (f.control === 'textarea') {
-      text = text
-        .replace(/\r\n?/g, '\n')
-        .split('\n')
-        .map((line) => line.trimEnd())
-        .join('\n');
-    }
+    text = text.trim();
+    if (f.control === 'textarea') text = text.split('\n').map((line) => line.trimEnd()).join('\n');
+    if (text.replace(INVISIBLE, '').trim() === '') text = '';
     out[f.name as InquiryField] = text;
   }
   return out;
@@ -104,7 +114,7 @@ export function validateInquiry(input: InquiryInput): InquiryErrors {
       errors[field] = 'tooLong';
       continue;
     }
-    if (f.type === 'email' && (!EMAIL_RE.test(value) || /\.\.|@\.|\.$/.test(value))) errors[field] = 'email';
+    if (f.type === 'email' && (!EMAIL_RE.test(value) || /^\.|\.\.|\.@|@\.|\.$/.test(value))) errors[field] = 'email';
     if (f.type === 'tel') {
       const digits = value.replace(/\D/g, '').length;
       if (digits < 8 || digits > 20) errors[field] = 'phone';
@@ -141,12 +151,14 @@ export function buildInquiryEmail(input: InquiryInput, opts: { now: Date; lang: 
     const clipped = clip(line, SUBJECT_PART_MAX);
     return clipped === line ? line : `${clipped}…`;
   };
-  const record = input as Record<string, string>;
-  const sender = record.company ? `${part(record.company)} · ${part(record.name)}` : part(record.name);
-  const rows: Array<[string, string]> = FIELDS.map((f) => [f.emailLabel, record[f.name] || EMPTY]);
+  // name and email are typed (RequiredFields below fails `npm run check` if a
+  // site drops them); company is optional, so it is read by name.
+  const company = (input as Partial<Record<string, string>>).company;
+  const sender = company ? `${part(company)} · ${part(input.name)}` : part(input.name);
+  const rows: Array<[string, string]> = FIELDS.map((f) => [f.emailLabel, input[f.name as InquiryField] || EMPTY]);
   rows.push(['접수 시각', formatKst(opts.now)]);
   rows.push(['문의 언어', opts.lang === 'en' ? '영어 (English)' : '한국어']);
-  return { subject: `${SUBJECT_PREFIX} — ${sender}`, replyTo: record.email, rows };
+  return { subject: `${SUBJECT_PREFIX} — ${sender}`, replyTo: input.email, rows };
 }
 
 /** JSON body for FormSubmit's AJAX endpoint. Underscore keys are FormSubmit settings, not rows. */

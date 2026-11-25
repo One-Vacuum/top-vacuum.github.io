@@ -313,6 +313,46 @@ describe('sending', () => {
   });
 });
 
+describe('robustness', () => {
+  it('mounting twice still sends once', async () => {
+    const fetchImpl = mount();
+    initInquiryForms(document, { fetchImpl, now: () => NOW, hostname: PROD, pageUrl: `https://${PROD}/`, env: {} });
+    fill(validValues);
+    await submitAndSettle('sent');
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('unlocks the form when showing "sending" fails, and a retry works', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const fetchImpl = mount();
+    fill(validValues);
+    vi.spyOn(status(), 'replaceChildren').mockImplementationOnce(() => {
+      throw new Error('display failed');
+    });
+    await submitAndSettle('error');
+    expect(error).toHaveBeenCalled();
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(button().getAttribute('aria-disabled')).toBe('false');
+    expect(field('message').readOnly).toBe(false);
+    await submitAndSettle('sent');
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the form usable when the preview cannot open', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mount({
+      hostname: 'localhost',
+      onDryRun: () => {
+        throw new Error('dialog detached');
+      },
+    });
+    fill(validValues);
+    await submitAndSettle('dryRun');
+    expect(error).toHaveBeenCalledWith('[inquiry] preview failed', expect.any(Error));
+    expect(button().getAttribute('aria-disabled')).toBe('false');
+  });
+});
+
 describe('honeypot', () => {
   it('drops a filled honeypot silently: no request, "sent", form reset, a console note', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});

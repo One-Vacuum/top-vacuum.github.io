@@ -18,6 +18,7 @@ shared=(
   scripts/check-shared.sh
   .github/workflows/ci.yml
   .github/workflows/deploy.yml
+  .tool-versions
 )
 status=0
 for f in "${shared[@]}"; do

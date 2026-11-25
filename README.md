@@ -46,7 +46,7 @@ For English: [README.en.md](README.en.md)
 - 모바일 반응형 레이아웃 동작
 - `npm run build` 오류 없이 완료
 - `npm test` 통과 (문의 양식 검증·메일 형식·전송 로직 테스트)
-- `npm run check` 통과 (타입 검사, Node 22 필요)
+- `npm run check` 통과 (타입 검사, `.tool-versions`의 Node 22 필요)
 - 문의 양식·언어 전환 공통 파일을 고쳤다면 `scripts/check-shared.sh ../one-vacuum.github.io` 통과 (두 사이트가 같은 파일을 씀)
 - 문의 양식: 빈칸으로 제출하면 오류 표시, localhost에서 제출하면 메일 미리보기만 뜨고 실제로는 발송되지 않음
 
@@ -129,7 +129,7 @@ export const SHOW_PRODUCTS = false; // false = 제품 섹션 및 관련 네비�
   ```
 - **스팸 방지:** 화면에 보이지 않는 함정 필드(honeypot)가 채워진 제출은 보내지 않습니다. 다만 전송 주소가 공개되어 있어 봇이 직접 보내는 스팸까지 막지는 못합니다. 봇의 직접 전송까지 막으려면 별도 서버(예: Cloudflare Worker + Turnstile)를 앞에 두어야 합니다. FormSubmit 인증 후 받는 무작위 별칭 주소는 이메일 주소를 노리는 수집 봇만 피할 수 있습니다.
 - **출시 전 확인:** ① 배포 직후 운영 사이트에서 직접 한 번 문의해 인증을 끝내 두기 ② 개인정보(이름·연락처·이메일) 수집·이용 안내 문구가 필요한지 사장님과 확인하기 (현재 양식에는 없음)
-- **관련 파일:** `src/components/InquirySection.astro`(화면), `src/lib/inquiry-config.ts`(필드·제목·수신자·운영 도메인), `src/lib/inquiry.ts`(검증·메일 형식·전송), `src/lib/inquiry-form.ts`(브라우저 동작), 문구는 `src/i18n/ui.ts`의 `inquiry.*`
+- **관련 파일:** `src/components/InquirySection.astro`(섹션), `src/components/InquiryForm.astro`(양식·미리보기, 두 사이트 공통), `src/lib/inquiry-config.ts`(필드·제목·수신자·운영 도메인), `src/lib/inquiry.ts`(검증·메일 형식·전송), `src/lib/inquiry-form.ts`(브라우저 동작), 문구는 `src/i18n/ui.ts`의 `inquiry.*`
 
 ## 배포
 

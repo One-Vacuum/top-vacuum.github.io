@@ -16,9 +16,11 @@ export type UiKey = keyof (typeof ui)['ko'];
 
 export const currentLang = (): Lang => (document.documentElement.lang === 'en' ? 'en' : 'ko');
 
+// Own keys only, so markup like data-i18n="constructor" cannot reach Object.prototype.
+const own = (lang: Lang, key: string) => (Object.prototype.hasOwnProperty.call(ui[lang], key) ? ui[lang][key as UiKey] : '');
+
 /** Korean is the fallback for a missing or empty translation. */
-export const translate = (key: string, lang: Lang = currentLang()): string =>
-  ui[lang][key as UiKey] || ui.ko[key as UiKey] || '';
+export const translate = (key: string, lang: Lang = currentLang()): string => own(lang, key) || own('ko', key) || '';
 
 /** Write a translatable string into an element and tag it for applyLang(). */
 export function setI18nText(el: HTMLElement, key: UiKey) {

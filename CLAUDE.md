@@ -21,14 +21,15 @@ Top Vacuum Inc. (탑베큠 주식회사) — Leybold(라이볼트) 한국 공식
 ## Shared Code with one-vacuum.github.io
 
 Both sites ship the same inquiry form and i18n runtime. These files must stay **byte-identical** in both repos — change both, then run `scripts/check-shared.sh ../one-vacuum.github.io` (it `cmp`s the list below):
-`src/lib/inquiry.ts`, `src/lib/inquiry-form.ts`, `src/lib/inquiry.test.ts`, `src/lib/inquiry-form.test.ts`, `src/components/InquiryForm.astro`, `src/i18n/client.ts`, `src/i18n/client.test.ts`, `src/i18n/ui.test.ts`, `src/test/setup.ts`, `vitest.config.ts`, `scripts/check-shared.sh`, `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`.
+`src/lib/inquiry.ts`, `src/lib/inquiry-form.ts`, `src/lib/inquiry.test.ts`, `src/lib/inquiry-form.test.ts`, `src/components/InquiryForm.astro`, `src/i18n/client.ts`, `src/i18n/client.test.ts`, `src/i18n/ui.test.ts`, `src/test/setup.ts`, `vitest.config.ts`, `scripts/check-shared.sh`, `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, `.tool-versions`.
+`InquiryForm.astro`'s header lists the CSS classes and Tailwind colour names each site must define for it.
 Site-specific counterparts: `src/lib/inquiry-config.ts` (+ `inquiry-config.test.ts` pinning its values), `src/lib/contact.ts`, `src/i18n/ui.ts`, and the section wrapper `InquirySection.astro`.
 
 ## Tech Stack
 
 - **Framework**: Astro 5.x (Static Site Generation)
 - **Styling**: Tailwind CSS 3.4 with an "engineering partner" palette (ink `#0B1416`, petrol accent `#0B5D6B`, cool paper surfaces)
-- **Node**: CI and deploy run Node 22 (`astro check` needs it)
+- **Node**: 22, pinned in `.tool-versions` (asdf; CI reads the same file). `astro check` fails on older Node
 - **Fonts**: Pretendard (body, loaded from CDN) + Inter Tight (wordmark, small uppercase labels, phone numbers; Google Fonts)
 - **i18n**: Client-side toggle via `data-i18n` attributes (Korean default, single page)
 - **Theme**: Dark/light mode toggle with Tailwind `dark:` classes (default: light)
@@ -76,9 +77,10 @@ top-vacuum.github.io/
 │   │   ├── products.json          # Product data (easy to edit!)
 │   │   └── images/                # Product images
 ├── .github/workflows/
-│   ├── deploy.yml                 # Test + build + deploy to GitHub Pages on push to main (per-job least-privilege permissions)
-│   └── ci.yml                     # Test + build on every pull request (read-only token)
+│   ├── deploy.yml                 # Type check + test + build + deploy to GitHub Pages on push to main (per-job least-privilege permissions)
+│   └── ci.yml                     # Type check + test + build on every pull request (read-only token)
 ├── scripts/check-shared.sh        # Checks the shared files are identical to the other site's
+├── .tool-versions                 # Node version (asdf); CI reads it too
 ├── vitest.config.ts               # Vitest via Astro's Vite config (getViteConfig)
 ├── astro.config.mjs               # Astro configuration (site URL, Tailwind)
 ├── tailwind.config.mjs            # Tailwind theme (custom colors, fonts)
@@ -156,14 +158,14 @@ Each entry in `public/products/products.json`:
 ### Inquiry Form (email)
 - **Files:** the shared `InquiryForm.astro` (form + preview dialog, the markup `inquiry-form.ts` binds to) is placed by `InquirySection.astro`, which renders the form (`#inquiry`) inside the "견적 · 기술 문의" section (`#contact`); `src/lib/inquiry-config.ts` holds this site's fields, subject prefix, recipient and production hosts; `src/lib/inquiry.ts` (validation, email layout, sending) and `src/lib/inquiry-form.ts` (browser controller, preview dialog) are **identical in one-vacuum.github.io — change both**
 - **Fields:** one list, `INQUIRY_FIELDS` in `inquiry-config.ts`, drives the markup, validation, max lengths and email rows. 회사명 and 펌프 모델 · 필요 압력 (`model`) are optional; 담당자/이름, 연락처, 이메일, 문의 내용 are required. Phone: 8–20 digits, anything else around them allowed (extensions, 내선), full-width digits normalised. Email: no whitespace or `, ; < > ( ) "` so it can never become several Reply-To addresses
-- **Delivery:** GitHub Pages is static, so `deliverInquiry` POSTs JSON to FormSubmit's AJAX endpoint `https://formsubmit.co/ajax/<recipient>` (no account or key) and aborts after 15 s. Recipient: **kynam@topvac.co.kr** (`DEFAULT_RECIPIENT`, the public contact email from `ui.ts`)
+- **Delivery:** GitHub Pages is static, so `deliverInquiry` POSTs JSON to FormSubmit's AJAX endpoint `https://formsubmit.co/ajax/<recipient>` (no account or key) and aborts after 15 s. Recipient: **kynam@topvac.co.kr** (`DEFAULT_RECIPIENT`, the public contact email in `contact.ts`)
 - **Email layout (for the owner):** subject `[탑베큠 홈페이지] 견적·기술 문의 — <company> · <name>` (name only without a company; each part one line, max 40 characters); FormSubmit `_template: table` with Korean row labels in field order, then 접수 시각 (KST) and 문의 언어. Empty optional fields show `—`. `_replyto` is the customer, so "Reply" goes straight to them. `_url` is the page origin + path (no query string)
 - **Outcomes:** sent → form resets, "문의가 전송되었습니다". FormSubmit's exact "This form needs Activation" reply (recipient has not clicked the one-time activation email; FormSubmit keeps those submissions 30 days) → form resets, "문의가 접수되었습니다…" plus a pre-filled email link. Any other refusal, HTTP error, non-JSON body, network failure or timeout → input kept, error message plus a pre-filled `mailto:` link (capped at 1800 characters by shortening the message)
 - **While sending:** the button is `aria-disabled` (not `disabled`, which would drop keyboard focus) and fields are read-only; afterwards focus moves to the status message. The status region (`role="status"`) stays rendered when empty (`sr-only`) so it is announced
 - **Preview instead of sending:** real sends happen only on `topvac.co.kr`, `www.topvac.co.kr` (`PRODUCTION_HOSTS`). Everywhere else (localhost, LAN IPs, tunnels, `npm run preview`) the form opens a dialog showing the exact email and sends nothing. A real send from `astro dev` needs both `PUBLIC_INQUIRY_LIVE=true` and `PUBLIC_INQUIRY_TO=<address>`; `PUBLIC_INQUIRY_TO` / `PUBLIC_INQUIRY_LIVE` are compiled out of production builds, and the override must be a plain address
 - **Spam:** a hidden `_honey` field; if filled, the submit pretends success and sends nothing. The endpoint itself is public, so direct POSTs bypass every client check — accepted for a no-backend site; see README
 - **No-JS:** the form is `method="post"`, so if the script never loads, typed details are not put in the URL
-- **Input cleaning:** control characters, bidi overrides and half emoji (lone surrogates) are dropped; single-line fields lose line breaks. Truncation (subject parts, the mailto body) counts whole characters, so emoji are never split
+- **Input cleaning:** control characters, bidi marks/overrides and half emoji (lone surrogates) are dropped; single-line fields turn every line-break form into a space; invisible characters are removed from the email, and a value of only invisible characters counts as empty. Truncation (subject parts, the mailto body) counts whole characters, so emoji are never split
 - **Message keys:** `STATUS_KEYS` / `ERROR_KEYS` in `inquiry-form.ts` map every status and error to a `ui.ts` key, so `npm run check` fails if one is missing
 - **i18n:** labels use `inquiry.*` keys; error/status messages carry `data-i18n` so the KO/EN switch re-translates them. Email labels stay Korean regardless of page language
 - **Tests:** shared `src/lib/inquiry.test.ts` (logic) and `src/lib/inquiry-form.test.ts` (renders `InquiryForm.astro` with Astro's `experimental_AstroContainer` in happy-dom and drives it through `initInquiryForms` with a mocked `fetch`) take every site value from `inquiry-config.ts`; `src/lib/inquiry-config.test.ts` pins this site's values; `src/components/components.test.ts` covers the site's components and a HomePage smoke render. `src/test/setup.ts` makes any unmocked `fetch` fail, so tests can never email the owner. The Container API is experimental: re-run `npm test` after any `astro` upgrade
@@ -190,14 +192,14 @@ npm run dev    # Start dev server (http://localhost:4321)
 npm run build  # Build for production (outputs to ./dist)
 npm run preview # Preview production build locally
 npm test       # Run unit + component tests (Vitest)
-npm run check  # Type-check .astro and .ts files (astro check; needs Node 22)
+npm run check  # Type-check .astro and .ts files (astro check; Node from .tool-versions)
 ```
 
 ## Styling Conventions
 
 - Uses Tailwind CSS utility classes
 - Colour tokens (`tailwind.config.mjs`): `ink` (text), `paper` (contact card, inquiry form panel), `line` / `line-strong` (dividers / form control borders, 3:1), `danger` (errors), `accent` (petrol `#0B5D6B`: top strip, primary button, labels; `accent-light` on dark), `night-*` and `snow-*` (dark mode). There is no `primary-*` palette any more
-- Custom components defined in `src/styles/global.css`: `.container-custom`, `.section`, `.label` (small uppercase petrol label), `.focus-ring`, `.btn-primary` / `.btn-secondary`, `.icon-btn`, `.nav-link`, `.lang-btn`, `.filter-btn`, `.field`, `.input` / `.field-error` / `.inquiry-status` / `.inquiry-preview` (inquiry form), and `.card-flip`. `.focus-ring` adds a transparent outline so focus stays visible in forced-colors (high contrast) mode / `.card-inner` / `.card-front` / `.card-back` (product card toggle)
+- Custom components defined in `src/styles/global.css`: `.container-custom`, `.section`, `.label` (small uppercase petrol label), `.focus-ring`, `.btn-primary` / `.btn-secondary`, `.icon-btn`, `.nav-link`, `.lang-btn`, `.filter-btn`, `.field`, `.input` / `.field-error` / `.inquiry-status` / `.inquiry-preview` (inquiry form), and `.card-flip` / `.card-inner` / `.card-front` / `.card-back` (product card toggle). `.focus-ring` adds a transparent outline so focus stays visible in forced-colors (high contrast) mode
 - The wordmark is plain text ("TOP VACUUM" in Inter Tight 800) in `Header.astro` and `Footer.astro`; there is no logo image or favicon yet
 - Classes used inside HTML strings in `ui.ts` (e.g. the Leybold links) are picked up because Tailwind scans `.ts` files
 - Responsive breakpoint: `md:` for desktop nav and layout transitions

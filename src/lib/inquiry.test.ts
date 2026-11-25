@@ -82,6 +82,39 @@ describe('normalizeInquiry', () => {
     expect(out.phone).toBe('');
     expect(out.name).toBe('');
   });
+
+  it.each([
+    ['a bidi override', '홍\u202E길동', '홍길동'],
+    ['a bidi isolate and marks', '\u2066홍\u200F길\u061C동\u2069', '홍길동'],
+    ['control characters', '홍\u0007길\u0000동', '홍길동'],
+    ['a lone surrogate (half an emoji)', '홍\uD83D길동', '홍길동'],
+    ['halves split by a control character', '\uD83D\u0001\uDE00홍', '홍'],
+    ['every kind of line break', '홍\r\n길\u2028동\u0085님\n\n', '홍 길 동 님'],
+  ])('cleans %s from a single-line field', (_label, raw, expected) => {
+    expect(normalizeInquiry({ name: raw }).name).toBe(expected);
+  });
+
+  it('keeps emoji, including joined sequences', () => {
+    expect(normalizeInquiry({ name: '홍😀', message: '👨\u200D👩\u200D👧 문의' })).toMatchObject({ name: '홍😀', message: '👨\u200D👩\u200D👧 문의' });
+  });
+
+  it('turns every line-break form into \\n in the message', () => {
+    expect(normalizeInquiry({ message: '가\u2028나\u2029다\u0085라' }).message).toBe('가\n나\n다\n라');
+  });
+
+  it('treats a value of only invisible characters as empty', () => {
+    expect(normalizeInquiry({ name: '\u200B\u200B', message: ' \u2060\n\uFEFF ' })).toMatchObject({ name: '', message: '' });
+  });
+
+  it('removes invisible characters pasted into the email address', () => {
+    expect(normalizeInquiry({ email: 'gil\u200Bdong@exam\u00ADple.com\uFEFF' }).email).toBe('gildong@example.com');
+  });
+
+  it('cleaned input always gives a mailto link that can be encoded', () => {
+    const raw = Object.fromEntries(INQUIRY_FIELDS.map((f) => [f.name, `${sample(f)}\uD83D\u202E`]));
+    const mail = buildInquiryEmail(normalizeInquiry(raw), { now: NOW, lang: 'ko' });
+    expect(() => mailtoHref(DEFAULT_RECIPIENT, mail)).not.toThrow();
+  });
 });
 
 describe('validateInquiry', () => {
@@ -100,7 +133,7 @@ describe('validateInquiry', () => {
     expect(errors).toMatchObject({ name: 'required', message: 'required' });
   });
 
-  it.each(['gildong', 'gildong@', 'gil dong@example.com', '@example.com', 'a,b@c.co', 'a@b.co,c@d.co', '<x@evil.com>', 'a@b..co', '"a b"@x.co', 'a;b@c.co', 'a@b.c.', 'a@.b.c'])(
+  it.each(['gildong', 'gildong@', 'gil dong@example.com', '@example.com', 'a,b@c.co', 'a@b.co,c@d.co', '<x@evil.com>', 'a@b..co', '"a b"@x.co', 'a;b@c.co', 'a@b.c.', 'a@.b.c', '.a@b.co', 'a.@b.co'])(
     'rejects email %s',
     (email) => {
       expect(validateInquiry({ ...valid, email }).email).toBe('email');
@@ -238,6 +271,13 @@ describe('recipient and dry run', () => {
     expect(inquiryRecipient({ DEV: true, PUBLIC_INQUIRY_TO: '  test@example.com ' })).toBe('test@example.com');
     expect(inquiryRecipient({ DEV: true, PUBLIC_INQUIRY_TO: '   ' })).toBe(DEFAULT_RECIPIENT);
   });
+
+  it.each(['a/b@c.co', 'a@b.co#x', 'a&b@c.co', 'a%40b@c.co', 'a@b.co?cc=x@y.co', 'not-an-email'])(
+    'ignores a dev override %s that is not a plain address',
+    (to) => {
+      expect(inquiryRecipient({ DEV: true, PUBLIC_INQUIRY_TO: to })).toBe(DEFAULT_RECIPIENT);
+    },
+  );
 
   it('sends for real only on the production hosts (any case, trailing dot)', () => {
     for (const host of PRODUCTION_HOSTS) {

@@ -27,6 +27,8 @@ describe('translate', () => {
     expect(currentLang()).toBe('en');
     expect(translate(KEY)).toBe(ui.en[KEY]);
     expect(translate('no.such.key')).toBe('');
+    expect(translate('constructor')).toBe('');
+    expect(translate('__proto__')).toBe('');
   });
 
   it('setI18nText writes the text and tags the element', () => {

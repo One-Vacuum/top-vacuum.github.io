@@ -57,6 +57,9 @@ export interface InquiryFormOptions {
 type FieldControl = HTMLInputElement | HTMLTextAreaElement;
 
 export function mountInquiryForm(form: HTMLFormElement, options: InquiryFormOptions = {}) {
+  // A second mount would bind a second submit handler and send twice.
+  if (form.dataset.inquiryMounted === 'true') return;
+  form.dataset.inquiryMounted = 'true';
   const fetchImpl = options.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
   const now = options.now ?? (() => new Date());
   const hostname = options.hostname ?? window.location.hostname;
@@ -163,22 +166,28 @@ export function mountInquiryForm(form: HTMLFormElement, options: InquiryFormOpti
     const to = inquiryRecipient(env);
     let mail: InquiryEmail | undefined;
     let result: SendResult | 'preview' | 'failed';
-    setSending(true);
-    setStatus('sending');
     try {
+      setSending(true);
+      setStatus('sending');
       mail = buildInquiryEmail(input, { now: now(), lang: currentLang() });
       result = isDryRun(hostname, env) ? 'preview' : await deliverInquiry(mail, { to, pageUrl, fetchImpl, timeoutMs: options.timeoutMs });
     } catch (error) {
       console.error('[inquiry] sending failed', error);
       result = 'failed';
+    } finally {
+      // Always unlock, or every later submit would be silently ignored.
+      setSending(false);
     }
-    setSending(false);
 
     // The outcome is shown outside the try above, so a display problem can
     // never be reported as a failed send.
     if (result === 'preview') {
       setStatus('dryRun');
-      options.onDryRun?.(mail!, to);
+      try {
+        options.onDryRun?.(mail!, to);
+      } catch (error) {
+        console.error('[inquiry] preview failed', error);
+      }
       return;
     }
     if (result === 'failed') {
@@ -229,6 +238,7 @@ export function showInquiryPreview(dialog: HTMLDialogElement, mail: InquiryEmail
 export function initInquiryForms(root: Document = document, options: InquiryFormOptions = {}) {
   const form = root.querySelector<HTMLFormElement>('[data-inquiry-form]');
   if (!form) return null;
+  if (form.dataset.inquiryMounted === 'true') return form;
   const preview = root.querySelector<HTMLDialogElement>('[data-inquiry-preview]');
   mountInquiryForm(form, {
     onDryRun: (mail, to) => {

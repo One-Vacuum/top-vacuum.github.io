@@ -46,7 +46,7 @@ Company brochure website built with Astro + Tailwind CSS.
 - Mobile responsive layout works
 - `npm run build` completes without errors
 - `npm test` passes (inquiry form validation, email format and sending)
-- `npm run check` passes (type check, needs Node 22)
+- `npm run check` passes (type check, needs Node 22 from `.tool-versions`)
 - If you changed the shared inquiry/i18n files, `scripts/check-shared.sh ../one-vacuum.github.io` passes (both sites use the same files)
 - Inquiry form: an empty submit shows errors; on localhost a submit shows the email preview and sends nothing
 
@@ -129,7 +129,7 @@ Submitting the "Quote & Technical Inquiry" form emails **kynam@topvac.co.kr** th
   ```
 - **Spam:** submissions that fill the hidden honeypot field are dropped. The endpoint is public, though, so bots posting to it directly are not stopped. Only a small server in front (e.g. a Cloudflare Worker with Turnstile) stops direct posts; the random alias FormSubmit gives after activation only avoids scanners that harvest the email address.
 - **Before launch:** ① right after deploy, submit once from the live site to complete activation ② check with the owner whether a personal-data collection notice (name, phone, email) is needed — the form has none today
-- **Files:** `src/components/InquirySection.astro` (markup), `src/lib/inquiry-config.ts` (fields, subject, recipient, production domain), `src/lib/inquiry.ts` (validation, email format, sending), `src/lib/inquiry-form.ts` (browser behaviour); text lives under `inquiry.*` in `src/i18n/ui.ts`
+- **Files:** `src/components/InquirySection.astro` (section), `src/components/InquiryForm.astro` (form and preview, shared by both sites), `src/lib/inquiry-config.ts` (fields, subject, recipient, production domain), `src/lib/inquiry.ts` (validation, email format, sending), `src/lib/inquiry-form.ts` (browser behaviour); text lives under `inquiry.*` in `src/i18n/ui.ts`
 
 ## Deployment
 
