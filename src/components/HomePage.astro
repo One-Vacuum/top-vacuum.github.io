@@ -16,8 +16,8 @@ const products = loadProducts();
 
   <InquirySection />
 
+  {/* Products Section */}
   {SHOW_PRODUCTS && (
-  <!-- Products Section -->
   <section id="products" class="section bg-paper dark:bg-night-raised">
     <div class="container-custom">
       <div class="mb-10">
@@ -27,7 +27,7 @@ const products = loadProducts();
 
       {products.length > 0 ? (
         <>
-          <!-- Category Filter + Search + Sort -->
+          {/* Category Filter + Search + Sort */}
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
             <div class="flex flex-wrap gap-2" id="category-filters">
               <button type="button" data-filter="all" class="filter-btn filter-active" aria-pressed="true" data-i18n="products.filterAll">{t['products.filterAll']}</button>
@@ -61,7 +61,7 @@ const products = loadProducts();
             </div>
           </div>
 
-          <!-- Product Grid -->
+          {/* Product Grid */}
           <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {products.map((product) => (
               <ProductCard
@@ -79,7 +79,7 @@ const products = loadProducts();
             ))}
           </div>
 
-          <!-- Show More Button -->
+          {/* Show More Button */}
           <div id="show-more-wrap" class="text-center mt-10">
             <button id="show-more-btn" type="button" class="btn-secondary">
               <span data-i18n="products.showMore">{t['products.showMore']}</span>
@@ -87,7 +87,7 @@ const products = loadProducts();
             </button>
           </div>
 
-          <!-- Empty filter state -->
+          {/* Empty filter state */}
           <div id="empty-filter" class="hidden text-center py-16">
             <svg class="w-12 h-12 mx-auto mb-4 text-ink-mute dark:text-snow-mute" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8" /></svg>
             <p class="text-lg text-ink-soft dark:text-snow-soft" data-i18n="products.comingSoon">{t['products.comingSoon']}</p>
@@ -105,7 +105,7 @@ const products = loadProducts();
 </BaseLayout>
 
 <script>
-  import { ui } from '../i18n/ui';
+  import { applyLang, type Lang } from '../i18n/client';
 
   // ===================== Search + Category Filter + Sort + Show More =====================
   // All lookups are null-safe: the products section is absent while
@@ -238,75 +238,19 @@ const products = loadProducts();
   });
 
   // ===================== Language Toggle =====================
+  const btnKO = document.getElementById('btnKO')!;
+  const btnEN = document.getElementById('btnEN')!;
   // The only keys whose values contain markup (constant strings from ui.ts).
   const HTML_KEYS = new Set<string>(['site.description', 'hero.headline', 'hero.description']);
 
-  const btnKO = document.getElementById('btnKO')!;
-  const btnEN = document.getElementById('btnEN')!;
-
-  function setLang(lang: 'ko' | 'en') {
-    // Update KO / EN segmented switch
+  function setLang(lang: Lang) {
     btnKO.classList.toggle('lang-active', lang === 'ko');
     btnEN.classList.toggle('lang-active', lang === 'en');
     btnKO.setAttribute('aria-pressed', String(lang === 'ko'));
     btnEN.setAttribute('aria-pressed', String(lang === 'en'));
+    applyLang(lang, { htmlKeys: HTML_KEYS });
 
-    // Update html lang attribute
-    document.documentElement.lang = lang;
-
-    // Update all data-i18n elements
-    const translations = ui[lang];
-    document.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => {
-      const key = el.dataset.i18n as keyof typeof translations;
-      const value = translations[key] || ui.ko[key];
-      if (!value) return;
-
-      if (el.tagName === 'TITLE') {
-        document.title = value;
-      } else if (el.tagName === 'META') {
-        el.setAttribute('content', value);
-      } else if (el.hasAttribute('data-i18n-html') && HTML_KEYS.has(key)) {
-        el.innerHTML = value;
-      } else {
-        el.textContent = value;
-      }
-    });
-
-    // Update select option elements
-    document.querySelectorAll<HTMLOptionElement>('[data-i18n-option]').forEach((el) => {
-      const key = el.dataset.i18nOption as keyof typeof translations;
-      const value = translations[key] || ui.ko[key];
-      if (value) el.textContent = value;
-    });
-
-    // Update placeholder attributes
-    document.querySelectorAll<HTMLElement>('[data-i18n-placeholder]').forEach((el) => {
-      const key = (el as HTMLElement).dataset.i18nPlaceholder as keyof typeof translations;
-      const value = translations[key] || ui.ko[key];
-      if (value) (el as HTMLInputElement).placeholder = value;
-    });
-
-    // Update accessible names
-    document.querySelectorAll<HTMLElement>('[data-i18n-aria-label]').forEach((el) => {
-      const key = el.dataset.i18nAriaLabel as keyof typeof translations;
-      const value = translations[key] || ui.ko[key];
-      if (value) el.setAttribute('aria-label', value);
-    });
-
-    // Update product image alt text
-    document.querySelectorAll<HTMLImageElement>('img[data-alt-ko]').forEach((el) => {
-      el.alt = (lang === 'ko' ? el.dataset.altKo : el.dataset.altEn) || '';
-    });
-
-    // Update product names and descriptions
-    document.querySelectorAll<HTMLElement>('.product-name').forEach((el) => {
-      el.textContent = (lang === 'ko' ? el.dataset.nameKo : el.dataset.nameEn) || '';
-    });
-    document.querySelectorAll<HTMLElement>('.product-desc').forEach((el) => {
-      el.textContent = (lang === 'ko' ? el.dataset.descKo : el.dataset.descEn) || '';
-    });
-
-    // Update Leybold links to language-specific URL
+    // Leybold links point to the matching language of leybold.com
     const leyboldUrl = lang === 'ko' ? 'https://www.leybold.com/ko-kr' : 'https://www.leybold.com/en';
     document.querySelectorAll<HTMLAnchorElement>('[data-leybold-link]').forEach((el) => {
       el.href = leyboldUrl;

@@ -1,8 +1,10 @@
+import { CONTACT } from '../lib/contact';
+
 export const ui = {
   ko: {
     // Site
     'site.title': 'Top Vacuum Inc. | 탑베큠 주식회사',
-    'site.description': '<a href="https://www.leybold.com/ko-kr" target="_blank" rel="noopener" class="font-semibold text-ink dark:text-snow underline-offset-2 hover:underline">Leybold(라이볼트)</a> 한국 공식 대리점 | 진공펌프 및 부품 전문',
+    'site.description': '<a href="https://www.leybold.com/ko-kr" target="_blank" rel="noopener" class="font-semibold text-ink dark:text-snow underline underline-offset-2">Leybold(라이볼트)</a> 한국 공식 대리점 | 진공펌프 및 부품 전문',
 
     // Top strip
     'strip.label': 'Leybold(라이볼트) 한국 공식 대리점',
@@ -17,7 +19,7 @@ export const ui = {
     // (site.description and the company names); no new claims.
     'hero.eyebrow': 'Top Vacuum Inc. · 탑베큠 주식회사',
     'hero.headline': 'Leybold(라이볼트)<br>한국 공식 대리점',
-    'hero.description': '<a href="https://www.leybold.com/ko-kr" target="_blank" rel="noopener" class="font-semibold text-accent dark:text-accent-light hover:underline underline-offset-2">Leybold(라이볼트)</a> 한국 공식 대리점으로서 진공펌프 및 부품을 전문으로 취급합니다. 다양한 산업 분야에 최적화된 진공 솔루션을 제공합니다.',
+    'hero.description': '<a href="https://www.leybold.com/ko-kr" target="_blank" rel="noopener" class="font-semibold text-accent dark:text-accent-light underline underline-offset-2">Leybold(라이볼트)</a> 한국 공식 대리점으로서 진공펌프 및 부품을 전문으로 취급합니다. 다양한 산업 분야에 최적화된 진공 솔루션을 제공합니다.',
 
     // Products
     'products.title': '제품 소개',
@@ -40,12 +42,12 @@ export const ui = {
     'contact.title': '연락처',
     'contact.phone': '전화',
     'contact.email': '이메일',
-    'contact.emailValue': 'kynam@topvac.co.kr',
+    'contact.emailValue': CONTACT.email,
     'contact.address': '주소',
     'contact.addressValue': '충청남도 아산시 음봉면 월암로 265-6',
-    'contact.phoneValue': '041-544-8058',
+    'contact.phoneValue': CONTACT.phone,
     'contact.mobile': '휴대폰',
-    'contact.mobileValue': '010-4455-1309',
+    'contact.mobileValue': CONTACT.mobile,
 
     // Inquiry form (견적 · 기술 문의) — section copy as approved in the design review
     'cta.inquiry': '문의하기',
@@ -92,7 +94,7 @@ export const ui = {
   en: {
     // Site
     'site.title': 'Top Vacuum Inc.',
-    'site.description': 'Authorized <a href="https://www.leybold.com/en" target="_blank" rel="noopener" class="font-semibold text-ink dark:text-snow underline-offset-2 hover:underline">Leybold</a> Dealer in Korea | Vacuum Pumps & Parts',
+    'site.description': 'Authorized <a href="https://www.leybold.com/en" target="_blank" rel="noopener" class="font-semibold text-ink dark:text-snow underline underline-offset-2">Leybold</a> Dealer in Korea | Vacuum Pumps & Parts',
 
     // Top strip
     'strip.label': 'Authorized Leybold Dealer in Korea',
@@ -106,7 +108,7 @@ export const ui = {
     // Hero
     'hero.eyebrow': 'Top Vacuum Inc.',
     'hero.headline': 'Authorized Leybold<br>Dealer in Korea',
-    'hero.description': 'As an authorized <a href="https://www.leybold.com/en" target="_blank" rel="noopener" class="font-semibold text-accent dark:text-accent-light hover:underline underline-offset-2">Leybold</a> dealer in Korea, we specialize in vacuum pumps and parts. We offer optimized vacuum solutions for various industries.',
+    'hero.description': 'As an authorized <a href="https://www.leybold.com/en" target="_blank" rel="noopener" class="font-semibold text-accent dark:text-accent-light underline underline-offset-2">Leybold</a> dealer in Korea, we specialize in vacuum pumps and parts. We offer optimized vacuum solutions for various industries.',
 
     // Products
     'products.title': 'Our Products',
@@ -129,12 +131,12 @@ export const ui = {
     'contact.title': 'Contact Us',
     'contact.phone': 'Phone',
     'contact.email': 'Email',
-    'contact.emailValue': 'kynam@topvac.co.kr',
+    'contact.emailValue': CONTACT.email,
     'contact.address': 'Address',
     'contact.addressValue': '265-6 Woram-ro, Eumbong-myeon, Asan-si, Chungcheongnam-do',
-    'contact.phoneValue': '041-544-8058',
+    'contact.phoneValue': CONTACT.phone,
     'contact.mobile': 'Mobile',
-    'contact.mobileValue': '010-4455-1309',
+    'contact.mobileValue': CONTACT.mobile,
 
     // Inquiry form
     'cta.inquiry': 'Send an Inquiry',

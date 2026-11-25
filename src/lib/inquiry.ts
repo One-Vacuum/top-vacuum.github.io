@@ -12,9 +12,8 @@
  * API answers "This form needs Activation"; FormSubmit keeps those submissions
  * (30 days) and delivers them after activation. See README → "문의 양식".
  */
+import type { Lang } from '../i18n/client';
 import { DEFAULT_RECIPIENT, INQUIRY_FIELDS, PRODUCTION_HOSTS, SUBJECT_PREFIX } from './inquiry-config';
-
-export type Lang = 'ko' | 'en';
 
 export interface InquiryFieldDef {
   name: string;
@@ -49,20 +48,32 @@ const SUBJECT_PART_MAX = 40;
 const EMPTY = '—';
 const TRUNCATED_NOTE = '…(내용이 길어 일부만 담았습니다)';
 
+/** First `max` characters, counted in code points so an emoji is never cut in half
+ * (a lone surrogate makes encodeURIComponent throw). */
+const clip = (s: string, max: number) => Array.from(s).slice(0, max).join('');
+
 // No whitespace, commas, semicolons, angle brackets, quotes or parentheses, so
 // a value can never become several Reply-To addresses.
 const EMAIL_RE = /^[^\s@,;<>()"[\]\\]+@[^\s@,;<>()"[\]\\]+\.[^\s@,;<>()"[\]\\]+$/;
 
+// Control characters (line breaks are handled per field below) and bidi
+// overrides that could disguise the subject.
+const UNSAFE_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g;
+/** Keeps surrogate pairs (emoji) and drops lone halves, which encodeURIComponent rejects. */
+const dropLoneSurrogates = (s: string) => s.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDFFF]/g, (m) => (m.length === 2 ? m : ''));
+
 /**
- * Trim every field. Phone numbers are NFKC-normalised (full-width digits from
- * a Korean IME become ASCII); multi-line fields keep line breaks but lose
- * trailing spaces.
+ * Trim every field and drop unsafe characters. Phone numbers are
+ * NFKC-normalised (full-width digits from a Korean IME become ASCII);
+ * multi-line fields keep line breaks but lose trailing spaces; single-line
+ * fields have line breaks turned into spaces.
  */
 export function normalizeInquiry(raw: Partial<Record<string, unknown>>): InquiryInput {
   const out = {} as InquiryInput;
   for (const f of FIELDS) {
     const value = raw[f.name];
-    let text = (typeof value === 'string' ? value : '').trim();
+    let text = dropLoneSurrogates(typeof value === 'string' ? value : '').replace(UNSAFE_CHARS, '').trim();
+    if (f.control !== 'textarea') text = text.replace(/[\r\n]+/g, ' ');
     if (f.type === 'tel') text = text.normalize('NFKC');
     if (f.control === 'textarea') {
       text = text
@@ -93,7 +104,7 @@ export function validateInquiry(input: InquiryInput): InquiryErrors {
       errors[field] = 'tooLong';
       continue;
     }
-    if (f.type === 'email' && (!EMAIL_RE.test(value) || value.includes('..'))) errors[field] = 'email';
+    if (f.type === 'email' && (!EMAIL_RE.test(value) || /\.\.|@\.|\.$/.test(value))) errors[field] = 'email';
     if (f.type === 'tel') {
       const digits = value.replace(/\D/g, '').length;
       if (digits < 8 || digits > 20) errors[field] = 'phone';
@@ -127,7 +138,8 @@ export interface InquiryEmail {
 export function buildInquiryEmail(input: InquiryInput, opts: { now: Date; lang: Lang }): InquiryEmail {
   const part = (s: string) => {
     const line = s.replace(/\s+/g, ' ');
-    return line.length > SUBJECT_PART_MAX ? `${line.slice(0, SUBJECT_PART_MAX)}…` : line;
+    const clipped = clip(line, SUBJECT_PART_MAX);
+    return clipped === line ? line : `${clipped}…`;
   };
   const record = input as Record<string, string>;
   const sender = record.company ? `${part(record.company)} · ${part(record.name)}` : part(record.name);
@@ -158,37 +170,47 @@ export function toPlainText(mail: InquiryEmail): string {
 }
 
 /**
- * Pre-filled `mailto:` link, kept under `maxLength` by shortening the longest
- * row (normally the message). Line breaks are CRLF as RFC 6068 asks.
+ * Pre-filled `mailto:` link, kept under `maxLength` by repeatedly shortening
+ * whichever row is longest; if even that cannot fit, the body is just a note.
+ * Line breaks are CRLF as RFC 6068 asks.
  */
 export function mailtoHref(to: string, mail: InquiryEmail, maxLength = MAILTO_MAX_LENGTH): string {
-  const build = (m: InquiryEmail) =>
-    `mailto:${to}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(toPlainText(m).replace(/\n/g, '\r\n'))}`;
-  let href = build(mail);
-  if (href.length <= maxLength) return href;
+  const build = (subject: string, body: string) =>
+    `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.replace(/\n/g, '\r\n'))}`;
+  const rows = mail.rows.map(([label, value]): [string, string] => [label, value]);
+  const cut = new Set<number>();
+  const render = () =>
+    build(mail.subject, toPlainText({ ...mail, rows: rows.map(([l, v], i): [string, string] => [l, cut.has(i) ? `${v}\n${TRUNCATED_NOTE}` : v]) }));
 
-  const longest = mail.rows.reduce((best, row, i) => (row[1].length > mail.rows[best][1].length ? i : best), 0);
-  const full = mail.rows[longest][1];
-  let keep = full.length;
-  while (keep > 0 && href.length > maxLength) {
-    keep = Math.floor(keep * 0.8);
-    const rows = mail.rows.map((row, i): [string, string] => (i === longest ? [row[0], `${full.slice(0, keep)}\n${TRUNCATED_NOTE}`] : row));
-    href = build({ ...mail, rows });
+  let href = render();
+  while (href.length > maxLength) {
+    const lengths = rows.map(([, v]) => Array.from(v).length);
+    const longest = lengths.indexOf(Math.max(...lengths));
+    if (lengths[longest] === 0) return build(mail.subject, TRUNCATED_NOTE);
+    rows[longest][1] = clip(rows[longest][1], Math.floor(lengths[longest] * 0.8));
+    cut.add(longest);
+    href = render();
   }
   return href;
 }
 
 export type InquiryEnv = { DEV?: boolean; PUBLIC_INQUIRY_TO?: string; PUBLIC_INQUIRY_LIVE?: string };
 
-/** The env values the form reads, named one by one so no others reach the bundle. */
+/**
+ * The env values the form reads, named one by one so no others reach the
+ * bundle; the test overrides are compiled out of production builds entirely.
+ */
 export const inquiryEnv = (): InquiryEnv => ({
   DEV: import.meta.env.DEV,
-  PUBLIC_INQUIRY_TO: import.meta.env.PUBLIC_INQUIRY_TO,
-  PUBLIC_INQUIRY_LIVE: import.meta.env.PUBLIC_INQUIRY_LIVE,
+  PUBLIC_INQUIRY_TO: import.meta.env.DEV ? import.meta.env.PUBLIC_INQUIRY_TO : undefined,
+  PUBLIC_INQUIRY_LIVE: import.meta.env.DEV ? import.meta.env.PUBLIC_INQUIRY_LIVE : undefined,
 });
 
-const devOverride = (env: InquiryEnv) =>
-  (env.DEV === true && typeof env.PUBLIC_INQUIRY_TO === 'string' && env.PUBLIC_INQUIRY_TO.trim()) || null;
+/** A plain address only: it goes into the endpoint path and a mailto: link. */
+const devOverride = (env: InquiryEnv) => {
+  const to = env.DEV === true && typeof env.PUBLIC_INQUIRY_TO === 'string' ? env.PUBLIC_INQUIRY_TO.trim() : '';
+  return EMAIL_RE.test(to) && !/[/?#&%]/.test(to) ? to : null;
+};
 
 /** `PUBLIC_INQUIRY_TO` redirects mail during `astro dev` only; production builds always mail the owner. */
 export function inquiryRecipient(env: InquiryEnv): string {
@@ -201,7 +223,7 @@ export function inquiryRecipient(env: InquiryEnv): string {
  * (localhost, LAN IPs, tunnels, preview builds) the form shows a preview.
  */
 export function isDryRun(hostname: string, env: InquiryEnv): boolean {
-  if (PRODUCTION_HOSTS.includes(hostname.toLowerCase())) return false;
+  if (PRODUCTION_HOSTS.includes(hostname.toLowerCase().replace(/\.$/, ''))) return false;
   return !(env.PUBLIC_INQUIRY_LIVE === 'true' && devOverride(env));
 }
 
@@ -230,7 +252,10 @@ export async function sendInquiry(
       signal,
     });
     data = await res.json().catch(() => null);
+    // An abort while the body was still arriving surfaces here as a null body.
+    if (signal?.aborted) throw new InquirySendError('Timed out');
   } catch (error) {
+    if (error instanceof InquirySendError) throw error;
     if (signal?.aborted) throw new InquirySendError('Timed out');
     throw error;
   }

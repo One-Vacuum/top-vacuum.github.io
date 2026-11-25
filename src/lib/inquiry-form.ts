@@ -19,11 +19,29 @@ import {
   validateInquiry,
   type InquiryEmail,
   type InquiryEnv,
+  type InquiryError,
   type InquiryErrors,
   type InquiryField,
+  type SendResult,
 } from './inquiry';
 
 export type InquiryStatus = 'invalid' | 'sending' | 'sent' | 'pending' | 'error' | 'dryRun';
+
+/** ui.ts keys for every message the form can show (type-checked against ui.ts). */
+export const STATUS_KEYS: Readonly<Record<InquiryStatus, UiKey>> = {
+  invalid: 'inquiry.status.invalid',
+  sending: 'inquiry.status.sending',
+  sent: 'inquiry.status.sent',
+  pending: 'inquiry.status.pending',
+  error: 'inquiry.status.error',
+  dryRun: 'inquiry.status.dryRun',
+};
+export const ERROR_KEYS: Readonly<Record<InquiryError, UiKey>> = {
+  required: 'inquiry.error.required',
+  email: 'inquiry.error.email',
+  phone: 'inquiry.error.phone',
+  tooLong: 'inquiry.error.tooLong',
+};
 
 export interface InquiryFormOptions {
   fetchImpl?: typeof fetch;
@@ -71,7 +89,7 @@ export function mountInquiryForm(form: HTMLFormElement, options: InquiryFormOpti
         continue;
       }
       control(field)?.setAttribute('aria-invalid', 'true');
-      if (slot) setI18nText(slot, `inquiry.error.${error}` as UiKey);
+      if (slot) setI18nText(slot, ERROR_KEYS[error]);
     }
   }
 
@@ -81,11 +99,15 @@ export function mountInquiryForm(form: HTMLFormElement, options: InquiryFormOpti
     status.dataset.state = kind ?? '';
     if (!kind) return;
     const message = document.createElement('span');
-    setI18nText(message, `inquiry.status.${kind}` as UiKey);
+    setI18nText(message, STATUS_KEYS[kind]);
     status.append(message);
     if ((kind === 'error' || kind === 'pending') && to) {
       const link = document.createElement('a');
-      link.href = mail ? mailtoHref(to, mail) : `mailto:${to}`;
+      try {
+        link.href = mail ? mailtoHref(to, mail) : `mailto:${to}`;
+      } catch {
+        link.href = `mailto:${to}`;
+      }
       link.textContent = to;
       link.className = 'font-semibold underline underline-offset-2';
       status.append(' ', link);
@@ -109,8 +131,11 @@ export function mountInquiryForm(form: HTMLFormElement, options: InquiryFormOpti
   form.addEventListener('input', (event) => {
     const field = (event.target as FieldControl | null)?.name as InquiryField | undefined;
     if (field && FIELD_ORDER.includes(field) && control(field)?.getAttribute('aria-invalid') === 'true') clearError(field);
-    // A finished send's message no longer applies once a new inquiry starts.
-    if (status && ['sent', 'pending', 'dryRun'].includes(status.dataset.state ?? '')) setStatus(null);
+    // A finished send's message no longer applies once a new inquiry starts,
+    // and "check the fields" goes once no field is flagged.
+    const state = status?.dataset.state ?? '';
+    if (['sent', 'pending', 'dryRun'].includes(state)) setStatus(null);
+    if (state === 'invalid' && !form.querySelector('[aria-invalid="true"]')) setStatus(null);
   });
 
   form.addEventListener('submit', async (event) => {
@@ -137,18 +162,28 @@ export function mountInquiryForm(form: HTMLFormElement, options: InquiryFormOpti
 
     const to = inquiryRecipient(env);
     let mail: InquiryEmail | undefined;
-    let previewing = false;
+    let result: SendResult | 'preview' | 'failed';
     setSending(true);
     setStatus('sending');
     try {
       mail = buildInquiryEmail(input, { now: now(), lang: currentLang() });
-      if (isDryRun(hostname, env)) {
-        previewing = true;
-        setStatus('dryRun');
-        options.onDryRun?.(mail, to);
-        return;
-      }
-      const result = await deliverInquiry(mail, { to, pageUrl, fetchImpl, timeoutMs: options.timeoutMs });
+      result = isDryRun(hostname, env) ? 'preview' : await deliverInquiry(mail, { to, pageUrl, fetchImpl, timeoutMs: options.timeoutMs });
+    } catch (error) {
+      console.error('[inquiry] sending failed', error);
+      result = 'failed';
+    }
+    setSending(false);
+
+    // The outcome is shown outside the try above, so a display problem can
+    // never be reported as a failed send.
+    if (result === 'preview') {
+      setStatus('dryRun');
+      options.onDryRun?.(mail!, to);
+      return;
+    }
+    if (result === 'failed') {
+      setStatus('error', mail, to);
+    } else {
       form.reset();
       if (result === 'pending-activation') {
         console.warn('[inquiry] FormSubmit form is not activated yet; the inquiry is held until it is');
@@ -156,14 +191,8 @@ export function mountInquiryForm(form: HTMLFormElement, options: InquiryFormOpti
       } else {
         setStatus('sent');
       }
-    } catch (error) {
-      console.error('[inquiry] sending failed', error);
-      setStatus('error', mail, to);
-    } finally {
-      setSending(false);
-      // Move focus to the outcome (the preview dialog takes focus itself).
-      if (!previewing) status?.focus();
     }
+    status?.focus();
   });
 }
 

@@ -1,13 +1,23 @@
 // @vitest-environment happy-dom
+// Shared tests for ./inquiry-form.ts and InquiryForm.astro — identical in
+// top-vacuum.github.io and one-vacuum.github.io (change both). Site values
+// come from ./inquiry-config.
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import InquirySection from '../components/InquirySection.astro';
+import InquiryForm from '../components/InquiryForm.astro';
+import { applyLang } from '../i18n/client';
 import { ui } from '../i18n/ui';
-import { INQUIRY_FIELDS } from './inquiry-config';
+import { DEFAULT_RECIPIENT, INQUIRY_FIELDS as CONFIG_FIELDS, PRODUCTION_HOSTS, SUBJECT_PREFIX } from './inquiry-config';
+import type { InquiryFieldDef } from './inquiry';
 import { initInquiryForms, showInquiryPreview, type InquiryFormOptions } from './inquiry-form';
 
+const INQUIRY_FIELDS: readonly InquiryFieldDef[] = CONFIG_FIELDS;
+const FORM_ID = 'inquiry-test';
 const NOW = new Date(Date.UTC(2026, 10, 25, 10, 30));
-const OWNER = 'kynam@topvac.co.kr';
+const OWNER = DEFAULT_RECIPIENT;
+const PROD = PRODUCTION_HOSTS[0];
+const SUBJECT = `${SUBJECT_PREFIX} — (주)한빛진공 · 홍길동`;
+const label = (key: string) => ui.ko[key as keyof (typeof ui)['ko']];
 let markup = '';
 
 const json = (body: unknown, status = 200) =>
@@ -19,14 +29,16 @@ const form = () => $<HTMLFormElement>('[data-inquiry-form]');
 const status = () => $('[data-inquiry-status]');
 const button = () => $<HTMLButtonElement>('[data-inquiry-form] button[type="submit"]');
 
-const validValues = {
-  company: '(주)한빛진공',
-  name: '홍길동',
-  phone: '010-1234-5678',
-  email: 'gildong@example.com',
-  model: 'SOGEVAC SV65B',
-  message: '견적 부탁드립니다.',
+/** A plausible value for each configured field. */
+const sample = (f: InquiryFieldDef): string => {
+  if (f.name === 'company') return '(주)한빛진공';
+  if (f.name === 'name') return '홍길동';
+  if (f.type === 'tel') return '010-1234-5678';
+  if (f.type === 'email') return 'gildong@example.com';
+  if (f.control === 'textarea') return '문의드립니다.';
+  return 'SV65B';
 };
+const validValues: Record<string, string> = Object.fromEntries(INQUIRY_FIELDS.map((f) => [f.name, sample(f)]));
 
 function fill(values: Record<string, string>) {
   for (const [name, value] of Object.entries(values)) field(name).value = value;
@@ -47,28 +59,19 @@ function mount(opts: InquiryFormOptions = {}) {
   initInquiryForms(document, {
     fetchImpl,
     now: () => NOW,
-    hostname: 'topvac.co.kr',
-    pageUrl: 'https://topvac.co.kr/',
+    hostname: PROD,
+    pageUrl: `https://${PROD}/`,
     env: {},
     ...opts,
   });
   return fetchImpl;
 }
 
-/** What setLang() in HomePage.astro does for data-i18n text. */
-function retranslate(lang: 'ko' | 'en') {
-  document.documentElement.lang = lang;
-  document.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => {
-    const key = el.dataset.i18n as keyof (typeof ui)['ko'];
-    el.textContent = ui[lang][key] || ui.ko[key];
-  });
-}
-
 beforeEach(async () => {
   if (!markup) {
     const container = await AstroContainer.create();
-    // Drop the component's bundled <script>; tests mount through initInquiryForms.
-    markup = (await container.renderToString(InquirySection)).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '');
+    // Drop the bundled <script>; tests mount through initInquiryForms.
+    markup = (await container.renderToString(InquiryForm, { props: { id: FORM_ID } })).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '');
   }
   document.documentElement.lang = 'ko';
   document.body.innerHTML = markup;
@@ -79,24 +82,22 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('InquirySection markup', () => {
-  it('renders every field from INQUIRY_FIELDS with matching label, required flag and maxlength', () => {
+describe('InquiryForm markup', () => {
+  it('renders every field from INQUIRY_FIELDS with its label, required flag and maxlength', () => {
     const labels = [...document.querySelectorAll('[data-inquiry-form] label[for]')].map((l) => l.textContent?.replace(/\s+/g, ' ').trim());
-    expect(labels).toEqual(['회사명 (선택)', '담당자/이름', '연락처', '이메일', '펌프 모델 · 필요 압력 (선택)', '문의 내용']);
+    expect(labels).toEqual(INQUIRY_FIELDS.map((f) => (f.required ? label(f.labelKey) : `${label(f.labelKey)} ${label('inquiry.optional')}`)));
     for (const f of INQUIRY_FIELDS) {
       expect(field(f.name).required).toBe(f.required);
       expect(field(f.name).maxLength).toBe(f.maxLength);
       expect(field(f.name).getAttribute('aria-describedby')).toBe(`iq-${f.name}-error`);
+      if (f.type && f.control === 'input') expect(field(f.name).type).toBe(f.type);
     }
-    expect(field('email').type).toBe('email');
-    expect(field('phone').type).toBe('tel');
-    expect(button().textContent?.trim()).toBe('문의 보내기');
+    expect(button().textContent?.trim()).toBe(label('inquiry.submit'));
   });
 
   it('posts (not GETs) if the script never runs, so details stay out of the URL', () => {
     expect(form().getAttribute('method')).toBe('post');
-    expect(form().id).toBe('inquiry');
-    expect($('#contact').tagName).toBe('SECTION');
+    expect(form().id).toBe(FORM_ID);
   });
 
   it('hides the honeypot from people, keyboards and autofill', () => {
@@ -140,20 +141,26 @@ describe('validation', () => {
   it('re-translates shown errors when the language switches', async () => {
     mount();
     await submitAndSettle('invalid');
-    retranslate('en');
+    applyLang('en');
     expect($('[data-error-for="name"]').textContent).toBe('This field is required.');
     expect(status().textContent).toBe('Please check the highlighted fields.');
   });
 
-  it('clears a field error as soon as the field is edited, and stale errors on resubmit', async () => {
+  it('clears a field error when edited, and "check the fields" once none is left', async () => {
     mount();
+    fill({ ...validValues, name: '' });
     await submitAndSettle('invalid');
     field('name').value = '홍';
     field('name').dispatchEvent(new Event('input', { bubbles: true }));
     expect(field('name').getAttribute('aria-invalid')).toBe('false');
     expect($('[data-error-for="name"]').textContent).toBe('');
     expect($('[data-error-for="name"]').dataset.i18n).toBeUndefined();
+    expect(status().dataset.state).toBe('');
+  });
 
+  it('clears stale errors on resubmit', async () => {
+    mount();
+    await submitAndSettle('invalid');
     fill({ ...validValues, email: 'bad' });
     status().dataset.state = '';
     await submitAndSettle('invalid');
@@ -172,17 +179,12 @@ describe('sending', () => {
     const [url, init] = fetchImpl.mock.calls[0];
     expect(url).toBe(`https://formsubmit.co/ajax/${OWNER}`);
     expect(JSON.parse(init.body)).toEqual({
-      _subject: '[탑베큠 홈페이지] 견적·기술 문의 — (주)한빛진공 · 홍길동',
+      _subject: SUBJECT,
       _template: 'table',
       _replyto: 'gildong@example.com',
       _captcha: 'false',
-      _url: 'https://topvac.co.kr/',
-      회사명: '(주)한빛진공',
-      '담당자/이름': '홍길동',
-      연락처: '010-1234-5678',
-      이메일: 'gildong@example.com',
-      '펌프 모델 · 필요 압력': 'SOGEVAC SV65B',
-      '문의 내용': '견적 부탁드립니다.',
+      _url: `https://${PROD}/`,
+      ...Object.fromEntries(INQUIRY_FIELDS.map((f) => [f.emailLabel, validValues[f.name]])),
       '접수 시각': '2026-11-25 19:30 (KST)',
       '문의 언어': '한국어',
     });
@@ -198,6 +200,14 @@ describe('sending', () => {
     fill(validValues);
     await submitAndSettle('sent');
     expect(JSON.parse(fetchImpl.mock.calls[0][1].body)['문의 언어']).toBe('영어 (English)');
+    expect(status().textContent).toBe('Your inquiry has been sent.');
+  });
+
+  it('re-translates the outcome when the language switches', async () => {
+    mount();
+    fill(validValues);
+    await submitAndSettle('sent');
+    applyLang('en');
     expect(status().textContent).toBe('Your inquiry has been sent.');
   });
 
@@ -221,7 +231,7 @@ describe('sending', () => {
     await vi.waitFor(() => expect(status().dataset.state).toBe('sent'));
     expect(button().getAttribute('aria-disabled')).toBe('false');
     expect(field('message').readOnly).toBe(false);
-    expect(button().textContent?.trim()).toBe('문의 보내기');
+    expect(button().textContent?.trim()).toBe(label('inquiry.submit'));
   });
 
   it.each([
@@ -230,18 +240,20 @@ describe('sending', () => {
     ['a refusal', () => Promise.resolve(json({ success: 'false', message: 'This form is deactivated' }))],
     ['a non-JSON body', () => Promise.resolve(new Response('<html>portal</html>'))],
   ])('on %s keeps the input, offers a pre-filled email link, and allows a retry', async (_label, failure) => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const fetchImpl = vi.fn().mockImplementationOnce(failure).mockResolvedValueOnce(json({ success: 'true' }));
     mount({ fetchImpl });
     fill(validValues);
     await submitAndSettle('error');
 
+    expect(error).toHaveBeenCalled();
+    expect($('[data-inquiry-status] span').dataset.i18n).toBe('inquiry.status.error');
     const link = status().querySelector('a')!;
     expect(link.textContent).toBe(OWNER);
     const params = new URLSearchParams(link.getAttribute('href')!.split('?')[1]);
-    expect(params.get('subject')).toBe('[탑베큠 홈페이지] 견적·기술 문의 — (주)한빛진공 · 홍길동');
-    expect(params.get('body')).toContain('견적 부탁드립니다.');
-    expect(field('message').value).toBe('견적 부탁드립니다.');
+    expect(params.get('subject')).toBe(SUBJECT);
+    expect(params.get('body')).toContain('문의드립니다.');
+    expect(field('message').value).toBe('문의드립니다.');
     expect(button().getAttribute('aria-disabled')).toBe('false');
     expect(document.activeElement).toBe(status());
 
@@ -251,27 +263,42 @@ describe('sending', () => {
   });
 
   it('times out a request that never answers', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let signal: AbortSignal | undefined;
     const hanging = vi.fn(
       (_url: string, init: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
+          signal = init.signal ?? undefined;
           init.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
         }),
     );
     mount({ fetchImpl: hanging as unknown as typeof fetch, timeoutMs: 20 });
     fill(validValues);
     await submitAndSettle('error');
+    expect(hanging).toHaveBeenCalledTimes(1);
+    expect(signal?.aborted).toBe(true);
+    expect(error.mock.calls[0][1]).toMatchObject({ name: 'InquirySendError', message: 'Timed out' });
     expect(status().querySelector('a')).not.toBeNull();
+  });
+
+  it('reports a failure to build the email (e.g. a broken clock) as an error with a plain email link', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const fetchImpl = mount({ now: () => new Date(NaN) });
+    fill(validValues);
+    await submitAndSettle('error');
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(status().querySelector('a')?.getAttribute('href')).toBe(`mailto:${OWNER}`);
+    expect(button().getAttribute('aria-disabled')).toBe('false');
   });
 
   it('when the form is not activated yet: resets, says "received" and still offers the email link', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     mount({ fetchImpl: vi.fn().mockResolvedValue(json({ success: 'false', message: 'This form needs Activation.' })) });
-    fill(validValues);
+    fill({ ...validValues, message: '가'.repeat(300) + '😀'.repeat(40) });
     await submitAndSettle('pending');
     expect(field('name').value).toBe('');
     expect(status().textContent).toContain('문의가 접수되었습니다.');
-    expect(status().querySelector('a')?.getAttribute('href')).toMatch(/^mailto:kynam@topvac\.co\.kr\?/);
+    expect(status().querySelector('a')?.getAttribute('href')).toMatch(new RegExp(`^mailto:${OWNER.replace(/\./g, '\\.')}\\?`));
     expect(warn).toHaveBeenCalled();
   });
 
@@ -287,13 +314,14 @@ describe('sending', () => {
 });
 
 describe('honeypot', () => {
-  it('drops a filled honeypot silently: no request, "sent", form reset', async () => {
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  it('drops a filled honeypot silently: no request, "sent", form reset, a console note', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const fetchImpl = mount();
     fill({ ...validValues, _honey: 'spam' });
     await submitAndSettle('sent');
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(field('name').value).toBe('');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('honeypot'));
   });
 
   it('still shows validation errors when the other fields are invalid', async () => {
@@ -313,9 +341,9 @@ describe('preview instead of sending (off production)', () => {
     const dialog = $<HTMLDialogElement>('[data-inquiry-preview]');
     expect(dialog.open || dialog.hasAttribute('open')).toBe(true);
     expect(dialog.querySelector('[data-preview="to"]')!.textContent).toBe(OWNER);
-    expect(dialog.querySelector('[data-preview="subject"]')!.textContent).toContain('견적·기술 문의');
+    expect(dialog.querySelector('[data-preview="subject"]')!.textContent).toBe(SUBJECT);
     const headers = [...dialog.querySelectorAll('th')];
-    expect(headers).toHaveLength(8);
+    expect(headers).toHaveLength(INQUIRY_FIELDS.length + 2);
     expect(headers.every((th) => th.getAttribute('scope') === 'row')).toBe(true);
     expect(field('name').value).toBe('홍길동');
   });
@@ -333,11 +361,18 @@ describe('preview instead of sending (off production)', () => {
     await submitAndSettle('sent');
     expect(fetchImpl.mock.calls[0][0]).toBe('https://formsubmit.co/ajax/me@example.com');
   });
+
+  it('ignores a PUBLIC_INQUIRY_TO that is not a plain address', async () => {
+    const fetchImpl = mount({ hostname: 'localhost', env: { DEV: true, PUBLIC_INQUIRY_LIVE: 'true', PUBLIC_INQUIRY_TO: 'me@x.com?cc=a@b.co' } });
+    fill(validValues);
+    await submitAndSettle('dryRun');
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
 });
 
 describe('page defaults', () => {
   it('uses window.location and the global fetch; the query string is not sent', async () => {
-    (window as unknown as { happyDOM: { setURL(url: string): void } }).happyDOM.setURL('https://topvac.co.kr/?gclid=abc#inquiry');
+    (window as unknown as { happyDOM: { setURL(url: string): void } }).happyDOM.setURL(`https://${PROD}/?gclid=abc#${FORM_ID}`);
     const fetchStub = vi.fn().mockResolvedValue(json({ success: 'true' }));
     vi.stubGlobal('fetch', fetchStub);
     initInquiryForms(document);
@@ -345,16 +380,16 @@ describe('page defaults', () => {
     await submitAndSettle('sent');
     const [url, init] = fetchStub.mock.calls[0];
     expect(url).toBe(`https://formsubmit.co/ajax/${OWNER}`);
-    expect(JSON.parse(init.body)._url).toBe('https://topvac.co.kr/');
+    expect(JSON.parse(init.body)._url).toBe(`https://${PROD}/`);
   });
 
   it('moves keyboard focus into the form when an in-page link to it is used', async () => {
     mount();
     const link = document.createElement('a');
-    link.href = '#inquiry';
+    link.href = `#${FORM_ID}`;
     document.body.append(link);
     link.click();
-    await vi.waitFor(() => expect(document.activeElement).toBe(field('company')));
+    await vi.waitFor(() => expect(document.activeElement).toBe(field(INQUIRY_FIELDS[0].name)));
   });
 
   it('returns null when the page has no form', () => {

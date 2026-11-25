@@ -1,13 +1,8 @@
-/**
- * Company contact details, read from `ui.ko` so `src/i18n/ui.ts` stays the
- * single place to change them.
- */
-import { ui } from '../i18n/ui';
-
+/** Company contact details: the single source for ui.ts text and tel:/mailto: links. */
 export const CONTACT = {
-  phone: ui.ko['contact.phoneValue'],
-  mobile: ui.ko['contact.mobileValue'],
-  email: ui.ko['contact.emailValue'],
+  phone: '041-544-8058',
+  mobile: '010-4455-1309',
+  email: 'kynam@topvac.co.kr',
 } as const;
 
 /** `tel:` link with everything but digits and `+` stripped. */

@@ -94,7 +94,20 @@ const t = ui.ko;
     menuBtn.setAttribute('aria-expanded', String(open));
   });
 
-  mobileMenu?.querySelectorAll('a').forEach((link) => {
+  // Hiding the menu would drop focus from the tapped link, so focus moves to
+  // the section it points to (the browser still does the scrolling).
+  mobileMenu?.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((link) => {
+    link.addEventListener('click', () => {
+      const target = document.getElementById(link.hash.slice(1));
+      mobileMenu?.classList.add('hidden');
+      menuBtn?.setAttribute('aria-expanded', 'false');
+      if (target) {
+        if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+        target.focus({ preventScroll: true });
+      }
+    });
+  });
+  mobileMenu?.querySelectorAll('a:not([href^="#"])').forEach((link) => {
     link.addEventListener('click', () => {
       mobileMenu?.classList.add('hidden');
       menuBtn?.setAttribute('aria-expanded', 'false');
