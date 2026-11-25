@@ -16,11 +16,13 @@ This file provides guidance for Claude Code when working on this project.
 
 Top Vacuum Inc. (탑베큠 주식회사) — Leybold(라이볼트) 한국 공식 대리점. A bilingual (Korean/English) company brochure website built with Astro and Tailwind CSS, hosted on GitHub Pages at https://topvac.co.kr.
 
+**Copy rule:** all site text comes from the company's existing copy in `src/i18n/ui.ts`. Do not invent claims, services, application lists, or technical data (e.g. pressure ranges); design changes may only rearrange existing text. Functional UI text (form labels, validation and status messages) and copy the user has explicitly approved (e.g. the inquiry section heading and lead) are fine.
+
 ## Tech Stack
 
 - **Framework**: Astro 5.x (Static Site Generation)
-- **Styling**: Tailwind CSS 3.4 with custom primary color palette (sky blue)
-- **Fonts**: Pretendard (body, loaded from CDN) + Outfit (brand title, loaded from Google Fonts)
+- **Styling**: Tailwind CSS 3.4 with an "engineering partner" palette (ink `#0B1416`, petrol accent `#0B5D6B`, cool paper surfaces)
+- **Fonts**: Pretendard (body, loaded from CDN) + Inter Tight (wordmark, small uppercase labels, phone numbers; Google Fonts)
 - **i18n**: Client-side toggle via `data-i18n` attributes (Korean default, single page)
 - **Theme**: Dark/light mode toggle with Tailwind `dark:` classes (default: light)
 - **Deployment**: GitHub Pages via GitHub Actions (auto-deploy on push to `main`)
@@ -31,17 +33,21 @@ Top Vacuum Inc. (탑베큠 주식회사) — Leybold(라이볼트) 한국 공식
 top-vacuum.github.io/
 ├── src/
 │   ├── components/
-│   │   ├── Header.astro           # Sticky header with nav, lang/theme toggles
-│   │   ├── Footer.astro           # Dark footer with contact info & quick links
-│   │   ├── Hero.astro             # Hero section with animated product tile background
-│   │   ├── HomePage.astro         # Main page (products, contact) + client-side JS
+│   │   ├── Header.astro           # Petrol top strip + sticky header (wordmark, nav, lang/theme toggles)
+│   │   ├── Footer.astro           # Light footer: wordmark, description, quick links, business info
+│   │   ├── Hero.astro             # Headline, description, CTAs (문의하기 → #inquiry) + quick-contact card
+│   │   ├── HomePage.astro         # Main page (hero, inquiry section, products section) + client-side JS
+│   │   ├── InquirySection.astro   # "견적 · 기술 문의" (#contact): direct contacts + inquiry form (#inquiry)
 │   │   ├── ProductCard.astro      # Product card with opacity-based front/back toggle
-│   │   └── LanguageSwitcher.astro # KO/EN toggle (tap either side to switch)
+│   │   └── LanguageSwitcher.astro # KO / EN segmented switch
 │   ├── i18n/
 │   │   └── ui.ts                  # All translation strings (KO/EN)
 │   ├── lib/
 │   │   ├── products.ts            # Product loading utility (reads public/products/products.json)
-│   │   └── features.ts            # Feature flags (e.g. SHOW_PRODUCTS to hide the products section)
+│   │   ├── features.ts            # Feature flags (e.g. SHOW_PRODUCTS to hide the products section)
+│   │   ├── inquiry.ts             # Inquiry form logic: validation, email layout, FormSubmit sending
+│   │   ├── inquiry-form.ts        # Browser controller for the inquiry form (+ localhost preview)
+│   │   └── *.test.ts              # Vitest tests for the two modules above
 │   ├── layouts/
 │   │   └── BaseLayout.astro       # Main HTML layout (head, header, footer)
 │   ├── pages/
@@ -54,7 +60,10 @@ top-vacuum.github.io/
 │   ├── products/
 │   │   ├── products.json          # Product data (easy to edit!)
 │   │   └── images/                # Product images
-├── .github/workflows/deploy.yml   # GitHub Pages deployment workflow
+├── .github/workflows/
+│   ├── deploy.yml                 # Test + build + deploy to GitHub Pages on push to main
+│   └── ci.yml                     # Test + build on every pull request
+├── vitest.config.ts               # Vitest via Astro's Vite config (getViteConfig)
 ├── astro.config.mjs               # Astro configuration (site URL, Tailwind)
 ├── tailwind.config.mjs            # Tailwind theme (custom colors, fonts)
 ├── tsconfig.json                  # TypeScript config (path aliases @ → src/)
@@ -65,15 +74,15 @@ top-vacuum.github.io/
 
 ### Page Rendering Flow
 1. `index.astro` renders `HomePage.astro` directly (single page, no routing)
-2. `HomePage.astro` contains all page content (products, contact) and client-side JS for language switching, category filtering, search, and sorting
+2. `HomePage.astro` renders `Hero.astro` (headline + quick-contact card), `InquirySection.astro` (`id="contact"`, form `id="inquiry"`) and the products section, plus client-side JS for language switching, category filtering, search, and sorting
 3. `BaseLayout.astro` wraps everything with HTML shell, Header, and Footer
 4. All translatable elements use `data-i18n` attributes; client-side `setLang()` swaps text from `src/i18n/ui.ts`
 5. Product names/descriptions use `data-name-ko`/`data-name-en` and `data-desc-ko`/`data-desc-en` attributes
 
 ### Feature Flags
 - `src/lib/features.ts` holds compile-time feature flags consumed by the Astro components
-- `SHOW_PRODUCTS` (default `false`): when `false`, the entire "제품 소개 / Products" section in `HomePage.astro` is hidden, along with all product-related navigation (header desktop + mobile links, footer quick link, hero CTA button, and the hero product-tile background). The code is gated with `{SHOW_PRODUCTS && (...)}`, not deleted — flip to `true` to restore the section once products exist
-- Contact section and all other content remain visible regardless of this flag
+- `SHOW_PRODUCTS` (default `false`): when `false`, the entire "제품 소개 / Products" section in `HomePage.astro` is hidden, along with all product-related navigation (header desktop + mobile links, footer quick link, hero CTA button). The code is gated with `{SHOW_PRODUCTS && (...)}`, not deleted — flip to `true` to restore the section once products exist
+- The contact card, inquiry section and all other content remain visible regardless of this flag
 
 ### Product Loading
 - Products are loaded at **build time** from `public/products/products.json` via `src/lib/products.ts`
@@ -112,7 +121,7 @@ Each entry in `public/products/products.json`:
 
 ### i18n System
 - Single page with client-side language toggle (default: Korean)
-- Tapping either KO or EN button toggles to the other language
+- KO sets Korean, EN sets English (segmented switch; the active side gets `lang-active`)
 - All translatable elements have `data-i18n="key"` attributes
 - `setLang('ko'|'en')` in `HomePage.astro` script swaps all text at runtime
 - For translations that contain HTML (e.g. inline links), add `data-i18n-html` to the element and use Astro's `set:html={...}` for static render; the runtime switcher uses `innerHTML` when `data-i18n-html` is present
@@ -122,8 +131,21 @@ Each entry in `public/products/products.json`:
 ### Theme System
 - Dark/light mode toggle in header (default: light/day mode)
 - Uses Tailwind `dark:` variant with `class` strategy
-- Theme preference persisted in `localStorage`
+- The preference is not persisted (reload returns to light)
+- The sun/moon icon swaps via `dark:` classes, no JS
 - `<html>` element gets `class="dark"` toggled
+
+### Inquiry Form (email)
+- `InquirySection.astro` renders the form; `src/lib/inquiry-form.ts` (`mountInquiryForm`) runs it in the browser; `src/lib/inquiry.ts` holds the pure logic (validation, email layout, sending)
+- **Delivery:** GitHub Pages is static, so the form POSTs JSON to FormSubmit's AJAX endpoint `https://formsubmit.co/ajax/<recipient>`; FormSubmit emails **kynam@topvac.co.kr** (`DEFAULT_RECIPIENT`). No account or key is needed
+- **Email layout (for the owner):** subject `[탑베큠 홈페이지] 견적·기술 문의 — <company> · <name>` (name only when no company); FormSubmit `_template: table` with Korean row labels in a fixed order: 회사명, 담당자/이름, 연락처, 이메일, 펌프 모델 · 필요 압력, 문의 내용, 접수 시각 (KST, `formatKst`), 문의 언어. Empty optional fields show `—`. `_replyto` is the customer's email so "Reply" goes straight to them
+- **Fields:** 회사명 and 펌프 모델 · 필요 압력 (`model`) are optional; 담당자/이름, 연락처, 이메일, 문의 내용 are required. Phone allows digits, spaces, `+ ( ) - .` with 8–15 digits; max lengths in `MAX_LENGTH`
+- **Activation:** the first submission to a new recipient makes FormSubmit send an "Activate Form" email; until it is clicked the API answers `success: "false"` with an activation message. FormSubmit keeps those submissions (30 days) and delivers them after activation, so `sendInquiry` returns `pending-activation` and the visitor sees "sent"
+- **Failure:** network/HTTP errors keep the visitor's input and show a `mailto:` link pre-filled with the same subject and body (`mailtoHref`)
+- **Localhost dry run:** on `localhost`/`127.0.0.1` nothing is sent unless `PUBLIC_INQUIRY_LIVE=true`; the form opens a preview dialog of the exact email instead. `PUBLIC_INQUIRY_TO` overrides the recipient (for testing with your own inbox)
+- **Spam:** a hidden `_honey` field; if filled, the submit pretends success and sends nothing
+- **i18n:** labels use `inquiry.*` keys; error/status messages are written with `data-i18n` so the KO/EN switch re-translates them in place. Email labels stay Korean regardless of page language
+- **Tests:** `src/lib/inquiry.test.ts` (pure logic) and `src/lib/inquiry-form.test.ts` (renders `InquirySection.astro` with the Astro Container API in happy-dom and drives the form with a mocked `fetch`). Run `npm test`; CI runs it on every PR and before deploy
 
 ## Image Optimization
 
@@ -137,6 +159,7 @@ Each entry in `public/products/products.json`:
 | **Products** | `public/products/products.json` + images in `public/products/images/` |
 | UI text translations | `src/i18n/ui.ts` |
 | Contact info | `src/i18n/ui.ts` (phone, email, address values) |
+| Inquiry form recipient / email layout | `src/lib/inquiry.ts` (`DEFAULT_RECIPIENT`, `EMAIL_LABELS`, `SUBJECT_PREFIX`) |
 
 ## Commands
 
@@ -145,18 +168,16 @@ npm install    # Install dependencies
 npm run dev    # Start dev server (http://localhost:4321)
 npm run build  # Build for production (outputs to ./dist)
 npm run preview # Preview production build locally
+npm test       # Run unit + component tests (Vitest)
 ```
 
 ## Styling Conventions
 
 - Uses Tailwind CSS utility classes
-- Custom components defined in `src/styles/global.css`:
-  - `.container-custom` — Max-width container with padding
-  - `.section` — Standard section padding
-  - `.btn-primary` / `.btn-secondary` — Button styles
-  - `.card-flip` / `.card-inner` / `.card-front` / `.card-back` — Product card toggle styles
-- Brand title uses Outfit font (`font-family: 'Outfit'`)
-- Primary color: `primary-600` (#0284c7, sky blue)
+- Colour tokens (`tailwind.config.mjs`): `ink` (text), `paper` (contact card, inquiry form panel), `line`, `accent` (petrol `#0B5D6B`: top strip, primary button, labels; `accent-light` on dark), `night-*` and `snow-*` (dark mode). There is no `primary-*` palette any more
+- Custom components defined in `src/styles/global.css`: `.container-custom`, `.section`, `.label` (small uppercase petrol label), `.focus-ring`, `.btn-primary` / `.btn-secondary`, `.icon-btn`, `.nav-link`, `.lang-btn`, `.filter-btn`, `.field`, `.input` / `.field-error` / `.inquiry-status` / `.inquiry-preview` (inquiry form), and `.card-flip` / `.card-inner` / `.card-front` / `.card-back` (product card toggle)
+- The wordmark is plain text ("TOP VACUUM" in Inter Tight 800) in `Header.astro` and `Footer.astro`; there is no logo image or favicon yet
+- Classes used inside HTML strings in `ui.ts` (e.g. the Leybold links) are picked up because Tailwind scans `.ts` files
 - Responsive breakpoint: `md:` for desktop nav and layout transitions
 
 ## Deployment

@@ -1,70 +1,59 @@
 ---
 import { ui } from '../i18n/ui';
-import { loadProducts } from '../lib/products';
 import { SHOW_PRODUCTS } from '../lib/features';
 
 const t = ui.ko;
-const products = loadProducts();
-const tileImages = products.slice(0, 16).map(p => `/products/images/${p.image}`);
+const phoneHref = 'tel:' + t['contact.phoneValue'].replace(/[^0-9+]/g, '');
+const mobileHref = 'tel:' + t['contact.mobileValue'].replace(/[^0-9+]/g, '');
 ---
 
-<section class="section bg-gradient-to-br from-primary-50 to-white dark:from-gray-900 dark:to-gray-950 relative overflow-hidden">
-  {SHOW_PRODUCTS && (
-  <!-- Animated product tile background -->
-  <div class="absolute inset-0 opacity-[0.15] dark:opacity-[0.10] pointer-events-none flex flex-col justify-center gap-6" aria-hidden="true">
-    <div class="hero-tiles flex gap-6" style="animation: scrollTiles 50s linear infinite;">
-      {[...tileImages, ...tileImages].map((img) => (
-        <div class="flex-none w-32 h-32 md:w-44 md:h-44 rounded-xl overflow-hidden">
-          <img src={img} alt="" class="w-full h-full object-contain" loading="eager" />
-        </div>
-      ))}
-    </div>
-    <div class="hero-tiles flex gap-6" style="animation: scrollTilesReverse 45s linear infinite;">
-      {[...tileImages.slice().reverse(), ...tileImages.slice().reverse()].map((img) => (
-        <div class="flex-none w-32 h-32 md:w-44 md:h-44 rounded-xl overflow-hidden">
-          <img src={img} alt="" class="w-full h-full object-contain" loading="eager" />
-        </div>
-      ))}
+<section class="container-custom pt-16 pb-20 md:pt-24 md:pb-28 lg:min-h-[640px] flex flex-col lg:flex-row lg:items-end gap-12 lg:gap-16">
+  <div class="flex-1 min-w-0">
+    <p class="label" data-i18n="hero.eyebrow">{t['hero.eyebrow']}</p>
+    <h1
+      class="hero-headline mt-6 text-[40px] sm:text-[52px] lg:text-[72px] font-bold leading-[1.12] tracking-[-0.045em] text-ink dark:text-snow"
+      data-i18n="hero.headline"
+      data-i18n-html
+      set:html={t['hero.headline']}
+    />
+    <p
+      class="mt-7 max-w-[600px] text-[17px] md:text-[19px] leading-[1.75] text-ink-soft dark:text-snow-soft"
+      data-i18n="hero.description"
+      data-i18n-html
+      set:html={t['hero.description']}
+    />
+    <div class="mt-10 flex flex-wrap gap-3">
+      {SHOW_PRODUCTS && (
+        <a href="#products" class="btn-secondary" data-i18n="nav.products">{t['nav.products']}</a>
+      )}
+      <a href="#inquiry" class="btn-primary" data-i18n="cta.inquiry">{t['cta.inquiry']}</a>
+      <a href="https://www.leybold.com/ko-kr" target="_blank" rel="noopener" data-leybold-link class="btn-secondary">
+        <span data-i18n="nav.leybold">{t['nav.leybold']}</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 17L17 7M8 7h9v9" />
+        </svg>
+      </a>
     </div>
   </div>
-  )}
 
-  <div class="container-custom relative z-10">
-    <div class="max-w-3xl mx-auto text-center">
-      <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mb-4" style="font-family: 'Outfit', sans-serif;" data-i18n="hero.title">
-        Top Vacuum Inc.
-      </h1>
-      <p id="hero-subtitle" class="text-2xl md:text-3xl text-primary-600 dark:text-primary-400 font-medium mb-6" data-i18n="hero.subtitle">
-        {t['hero.subtitle']}
-      </p>
-      <p class="text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed" data-i18n="hero.description" data-i18n-html set:html={t['hero.description']}></p>
-      <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-        {SHOW_PRODUCTS && (
-        <a href="#products" class="btn-primary" data-i18n="nav.products">
-          {t['nav.products']}
-        </a>
-        )}
-        <a href="#contact" class="btn-secondary" data-i18n="nav.contact">
-          {t['nav.contact']}
-        </a>
-        <a href="https://www.leybold.com/ko-kr" target="_blank" rel="noopener" data-leybold-link class="btn-secondary">
-          <span data-i18n="nav.leybold">{t['nav.leybold']}</span>
-          <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-        </a>
-      </div>
+  <!-- Quick-contact card (the full contact section + inquiry form is InquirySection, #contact) -->
+  <aside class="w-full lg:w-[380px] shrink-0 rounded-[20px] bg-paper dark:bg-night-raised p-7 md:p-8 flex flex-col gap-5" aria-labelledby="contact-title">
+    <h2 id="contact-title" class="text-[15px] font-bold text-ink dark:text-snow" data-i18n="contact.title">{t['contact.title']}</h2>
+    <div class="flex flex-col gap-0.5">
+      <span class="text-[13px] text-ink-mute dark:text-snow-mute" data-i18n="contact.phone">{t['contact.phone']}</span>
+      <a href={phoneHref} class="focus-ring self-start rounded-sm font-display text-[28px] md:text-[30px] font-bold tracking-[-0.01em] text-ink dark:text-snow hover:text-accent dark:hover:text-accent-light transition-colors" data-i18n="contact.phoneValue">{t['contact.phoneValue']}</a>
     </div>
-  </div>
+    <div class="flex flex-col gap-0.5">
+      <span class="text-[13px] text-ink-mute dark:text-snow-mute" data-i18n="contact.mobile">{t['contact.mobile']}</span>
+      <a href={mobileHref} class="focus-ring self-start rounded-sm font-display text-[22px] font-semibold text-ink dark:text-snow hover:text-accent dark:hover:text-accent-light transition-colors" data-i18n="contact.mobileValue">{t['contact.mobileValue']}</a>
+    </div>
+    <div class="flex flex-col gap-0.5">
+      <span class="text-[13px] text-ink-mute dark:text-snow-mute" data-i18n="contact.email">{t['contact.email']}</span>
+      <a href="mailto:kynam@topvac.co.kr" class="focus-ring self-start rounded-sm font-display text-[18px] font-semibold text-ink dark:text-snow hover:text-accent dark:hover:text-accent-light transition-colors break-all" data-i18n="contact.emailValue">{t['contact.emailValue']}</a>
+    </div>
+    <div class="pt-4 border-t border-line dark:border-night-line flex flex-col gap-0.5">
+      <span class="text-[13px] text-ink-mute dark:text-snow-mute" data-i18n="contact.address">{t['contact.address']}</span>
+      <span class="text-[15px] leading-relaxed text-ink-soft dark:text-snow-soft" data-i18n="contact.addressValue">{t['contact.addressValue']}</span>
+    </div>
+  </aside>
 </section>
-
-<style>
-  @keyframes scrollTiles {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-  @keyframes scrollTilesReverse {
-    0% { transform: translateX(-50%); }
-    100% { transform: translateX(0); }
-  }
-</style>

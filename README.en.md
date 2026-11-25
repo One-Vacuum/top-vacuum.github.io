@@ -39,37 +39,22 @@ Company brochure website built with Astro + Tailwind CSS.
 
 - `npm run dev` starts without errors
 - Page loads correctly (http://localhost:4321)
-- Language toggle works (tap either KO or EN to switch)
+- Language switch works (KO = Korean, EN = English)
 - All product images display
 - Product card detail toggle works on click
 - Product search and sorting works
 - Mobile responsive layout works
 - `npm run build` completes without errors
+- `npm test` passes (inquiry form validation, email format and sending)
+- Inquiry form: an empty submit shows errors; on localhost a submit shows the email preview and sends nothing
 
 ## Adding Images
 
 > **Image size optimization**: Use small file sizes for product images whenever possible. JPG format is recommended over PNG for smaller file sizes. Large images affect page load speed and GitHub repository size.
 
-### Company Logo
+### Company Logo & Favicon
 
-Place your logo file at:
-```
-public/images/logo.png
-```
-- Supported formats: PNG, JPG, SVG
-
-### Favicon
-
-Favicon files are located at:
-```
-public/images/favicon/
-├── favicon.ico
-├── favicon-16x16.png
-├── favicon-32x32.png
-├── apple-touch-icon.png
-├── android-chrome-192x192.png
-└── android-chrome-512x512.png
-```
+There is no logo image or favicon yet. The "TOP VACUUM" in the header and footer is a text wordmark (Inter Tight) in `src/components/Header.astro` and `src/components/Footer.astro`. To add a logo or favicon, put the files in `public/images/` and link them from `<head>` in `src/layouts/BaseLayout.astro`.
 
 ## Managing Products
 
@@ -129,9 +114,22 @@ export const SHOW_PRODUCTS = false; // false = hides the products section and re
 - `false`: hides the products section and all product-related links in the header, footer, and hero (the code stays intact).
 - `true`: after adding products, flip this to `true` to bring the section back.
 
+## Inquiry Form (Email)
+
+Submitting the "Quote & Technical Inquiry" form emails **kynam@topvac.co.kr** through [FormSubmit](https://formsubmit.co). GitHub Pages is static (no server), so the site uses this no-account form-to-email relay.
+
+- **Email format:** subject `[탑베큠 홈페이지] 견적·기술 문의 — company · name`; the body is a table (회사명, 담당자/이름, 연락처, 이메일, 펌프 모델 · 필요 압력, 문의 내용, 접수 시각, 문의 언어 — Korean labels for the owner). Hitting "Reply" answers the customer directly.
+- **One-time activation (required):** after deploy, the first submission makes FormSubmit send an "Activate Form" email to kynam@topvac.co.kr. Click its button once; later submissions are then delivered. Submissions made before activation are kept for 30 days and delivered after it.
+- **Local testing:** on localhost nothing is sent; a preview of the email the owner would receive is shown instead. To test a real send, run the command below. Without `PUBLIC_INQUIRY_TO` it goes to kynam@topvac.co.kr.
+  ```bash
+  PUBLIC_INQUIRY_LIVE=true PUBLIC_INQUIRY_TO=you@example.com npm run dev
+  ```
+- **Spam:** submissions that fill the hidden honeypot field are dropped.
+- **Files:** `src/components/InquirySection.astro` (markup), `src/lib/inquiry.ts` (validation, email format, sending), `src/lib/inquiry-form.ts` (browser behaviour); text lives under `inquiry.*` in `src/i18n/ui.ts`
+
 ## Deployment
 
-The site auto-deploys to GitHub Pages when you push to `main`.
+Pushing to `main` runs the tests (`npm test`) and the build, then deploys to GitHub Pages. Opening a PR runs the same tests and build in CI (`.github/workflows/ci.yml`).
 
 ### First-time GitHub Pages Setup
 
