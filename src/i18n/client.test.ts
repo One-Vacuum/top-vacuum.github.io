@@ -2,10 +2,10 @@
 // Shared tests for ./client.ts — identical in top-vacuum.github.io and
 // one-vacuum.github.io (change both).
 import { beforeEach, describe, expect, it } from 'vitest';
-import { applyLang, currentLang, setI18nText, translate } from './client';
+import { applyLang, currentLang, translate } from './client';
 import { ui } from './ui';
 
-const KEY = 'inquiry.submit';
+const KEY = 'nav.contact';
 
 beforeEach(() => {
   document.documentElement.lang = 'ko';
@@ -29,13 +29,6 @@ describe('translate', () => {
     expect(translate('no.such.key')).toBe('');
     expect(translate('constructor')).toBe('');
     expect(translate('__proto__')).toBe('');
-  });
-
-  it('setI18nText writes the text and tags the element', () => {
-    const el = document.createElement('span');
-    setI18nText(el, KEY);
-    expect(el.textContent).toBe(ui.ko[KEY]);
-    expect(el.dataset.i18n).toBe(KEY);
   });
 });
 

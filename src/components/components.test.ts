@@ -3,16 +3,16 @@ import { describe, expect, it } from 'vitest';
 import Header from './Header.astro';
 import Hero from './Hero.astro';
 import HomePage from './HomePage.astro';
-import InquirySection from './InquirySection.astro';
+import ContactSection from './ContactSection.astro';
 import LanguageSwitcher from './LanguageSwitcher.astro';
 
 const render = async (component: Parameters<AstroContainer['renderToString']>[0]) =>
   (await AstroContainer.create()).renderToString(component);
 
 describe('Hero', () => {
-  it('links the 문의하기 button to the inquiry form', async () => {
+  it('links the 연락처 button to the contact section', async () => {
     const html = await render(Hero);
-    expect(html).toMatch(/<a href="#inquiry"[^>]*data-i18n="cta.inquiry"[^>]*>문의하기<\/a>/);
+    expect(html).toMatch(/<a href="#contact"[^>]*data-i18n="nav.contact"[^>]*>연락처<\/a>/);
   });
 
   it('builds tel: links with digits only', async () => {
@@ -22,21 +22,23 @@ describe('Hero', () => {
   });
 });
 
-describe('InquirySection', () => {
-  it('is the #contact section with the #inquiry form and direct contacts', async () => {
-    const html = await render(InquirySection);
+describe('ContactSection', () => {
+  it('is the #contact section with phone, mobile, email and address', async () => {
+    const html = await render(ContactSection);
     expect(html).toMatch(/<section id="contact"/);
-    expect(html).toMatch(/<form id="inquiry"[^>]*method="post"/);
+    expect(html).toContain('href="tel:0415448058"');
+    expect(html).toContain('href="tel:01044551309"');
     expect(html).toContain('href="mailto:kynam@topvac.co.kr"');
-    expect(html).toContain('견적 · 기술 문의');
+    expect(html).toContain('data-i18n="contact.addressValue"');
+    expect(html).not.toContain('<form');
   });
 });
 
 describe('HomePage', () => {
-  it('renders the hero, the inquiry section and the language switch', async () => {
+  it('renders the hero, the contact section and the language switch', async () => {
     const html = await render(HomePage);
     expect(html).toContain('id="contact"');
-    expect(html).toContain('data-inquiry-form');
+    expect(html).not.toContain('<form');
     expect(html).toContain('id="btnKO"');
   });
 });

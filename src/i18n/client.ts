@@ -1,5 +1,5 @@
 /**
- * Browser-side i18n: the KO/EN switch and runtime text helpers. Shared:
+ * Browser-side i18n: the KO/EN switch. Shared:
  * identical in both site repos (change both).
  *
  * The page language lives on `<html lang>`. Elements tagged with the
@@ -20,12 +20,6 @@ const own = (lang: Lang, key: string) => (Object.prototype.hasOwnProperty.call(u
 
 /** Korean is the fallback for a missing or empty translation. */
 export const translate = (key: string, lang: Lang = currentLang()): string => own(lang, key) || own('ko', key) || '';
-
-/** Write a translatable string into an element and tag it for applyLang(). */
-export function setI18nText(el: HTMLElement, key: UiKey) {
-  el.dataset.i18n = key;
-  el.textContent = translate(key);
-}
 
 /** Switch every tagged element to `lang`. Only `htmlKeys` (constant ui.ts strings with markup) are written as HTML. */
 export function applyLang(lang: Lang, opts: { htmlKeys?: ReadonlySet<string>; root?: Document } = {}) {

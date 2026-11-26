@@ -45,10 +45,9 @@ For English: [README.en.md](README.en.md)
 - 제품 검색 및 정렬 동작
 - 모바일 반응형 레이아웃 동작
 - `npm run build` 오류 없이 완료
-- `npm test` 통과 (문의 양식 검증·메일 형식·전송 로직 테스트)
+- `npm test` 통과
 - `npm run check` 통과 (타입 검사, `.tool-versions`의 Node 22 필요)
-- 문의 양식·언어 전환 공통 파일을 고쳤다면 `scripts/check-shared.sh ../one-vacuum.github.io` 통과 (두 사이트가 같은 파일을 씀)
-- 문의 양식: 빈칸으로 제출하면 오류 표시, localhost에서 제출하면 메일 미리보기만 뜨고 실제로는 발송되지 않음
+- 두 사이트 공통 파일(언어 전환·CI 등)을 고쳤다면 `scripts/check-shared.sh ../one-vacuum.github.io` 통과 (두 사이트가 같은 파일을 씀)
 
 ## 이미지 추가
 
@@ -115,21 +114,6 @@ export const SHOW_PRODUCTS = false; // false = 제품 섹션 및 관련 네비�
 
 - `false`: 제품 섹션과 헤더/푸터/히어로의 제품 관련 링크가 모두 숨겨집니다 (코드는 그대로 유지).
 - `true`: 제품을 추가한 뒤 이 값을 `true`로 변경하면 섹션이 다시 표시됩니다.
-
-## 문의 양식 (이메일 전송)
-
-"견적 · 기술 문의" 양식을 제출하면 [FormSubmit](https://formsubmit.co)을 통해 **kynam@topvac.co.kr** 로 메일이 갑니다. GitHub Pages는 서버가 없는 정적 사이트라, 계정 없이 쓰는 폼→이메일 전달 서비스를 사용합니다.
-
-- **메일 형식:** 제목은 `[탑베큠 홈페이지] 견적·기술 문의 — 회사명 · 이름`, 본문은 표(회사명, 담당자/이름, 연락처, 이메일, 펌프 모델 · 필요 압력, 문의 내용, 접수 시각, 문의 언어)입니다. 받은 메일에서 "답장"을 누르면 고객 이메일로 바로 답장됩니다.
-- **최초 1회 인증 (필수):** 배포 후 첫 문의가 들어오면 FormSubmit이 kynam@topvac.co.kr로 "Activate Form" 메일을 보냅니다. 메일의 버튼을 한 번 눌러야 이후 문의가 전달됩니다. 인증 전에 들어온 문의는 FormSubmit이 30일간 보관했다가 인증 후 전달하며, 그동안 방문자에게는 "접수되었습니다" 안내와 이메일 링크가 표시됩니다.
-- **실패 시:** 네트워크 오류·응답 없음(15초)·FormSubmit 거부 시 입력 내용은 그대로 남고, 같은 내용이 채워진 이메일 링크가 표시됩니다.
-- **테스트:** 실제 발송은 운영 도메인(topvac.co.kr)에서만 됩니다. localhost, 같은 와이파이의 휴대폰(IP 주소), `npm run preview` 등에서는 보내지 않고 "사장님이 받게 될 메일" 미리보기만 띄웁니다. 본인 메일로 실제 발송을 시험하려면 아래처럼 실행합니다 (두 값 모두 필요하고, `npm run dev`에서만 동작합니다).
-  ```bash
-  PUBLIC_INQUIRY_LIVE=true PUBLIC_INQUIRY_TO=본인@이메일주소 npm run dev
-  ```
-- **스팸 방지:** 화면에 보이지 않는 함정 필드(honeypot)가 채워진 제출은 보내지 않습니다. 다만 전송 주소가 공개되어 있어 봇이 직접 보내는 스팸까지 막지는 못합니다. 봇의 직접 전송까지 막으려면 별도 서버(예: Cloudflare Worker + Turnstile)를 앞에 두어야 합니다. FormSubmit 인증 후 받는 무작위 별칭 주소는 이메일 주소를 노리는 수집 봇만 피할 수 있습니다.
-- **출시 전 확인:** ① 배포 직후 운영 사이트에서 직접 한 번 문의해 인증을 끝내 두기 ② 개인정보(이름·연락처·이메일) 수집·이용 안내 문구가 필요한지 사장님과 확인하기 (현재 양식에는 없음)
-- **관련 파일:** `src/components/InquirySection.astro`(섹션), `src/components/InquiryForm.astro`(양식·미리보기, 두 사이트 공통), `src/lib/inquiry-config.ts`(필드·제목·수신자·운영 도메인), `src/lib/inquiry.ts`(검증·메일 형식·전송), `src/lib/inquiry-form.ts`(브라우저 동작), 문구는 `src/i18n/ui.ts`의 `inquiry.*`
 
 ## 배포
 

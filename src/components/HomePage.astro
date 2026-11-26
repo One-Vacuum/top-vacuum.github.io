@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from './Hero.astro';
-import InquirySection from './InquirySection.astro';
+import ContactSection from './ContactSection.astro';
 import ProductCard from './ProductCard.astro';
 import { ui } from '../i18n/ui';
 import { loadProducts, formatPrice } from '../lib/products';
@@ -14,7 +14,7 @@ const products = loadProducts();
 <BaseLayout>
   <Hero />
 
-  <InquirySection />
+  <ContactSection />
 
   {/* Products Section */}
   {SHOW_PRODUCTS && (
