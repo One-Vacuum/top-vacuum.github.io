@@ -39,37 +39,23 @@ Company brochure website built with Astro + Tailwind CSS.
 
 - `npm run dev` starts without errors
 - Page loads correctly (http://localhost:4321)
-- Language toggle works (tap either KO or EN to switch)
+- Language switch works (KO = Korean, EN = English)
 - All product images display
 - Product card detail toggle works on click
 - Product search and sorting works
 - Mobile responsive layout works
 - `npm run build` completes without errors
+- `npm test` passes
+- `npm run check` passes (type check, needs Node 22 from `.tool-versions`)
+- If you changed the files both sites share (language switch, CI, …), `scripts/check-shared.sh ../one-vacuum.github.io` passes (both sites use the same files)
 
 ## Adding Images
 
 > **Image size optimization**: Use small file sizes for product images whenever possible. JPG format is recommended over PNG for smaller file sizes. Large images affect page load speed and GitHub repository size.
 
-### Company Logo
+### Company Logo & Favicon
 
-Place your logo file at:
-```
-public/images/logo.png
-```
-- Supported formats: PNG, JPG, SVG
-
-### Favicon
-
-Favicon files are located at:
-```
-public/images/favicon/
-├── favicon.ico
-├── favicon-16x16.png
-├── favicon-32x32.png
-├── apple-touch-icon.png
-├── android-chrome-192x192.png
-└── android-chrome-512x512.png
-```
+There is no logo image or favicon yet. The "TOP VACUUM" in the header and footer is a text wordmark (Inter Tight) in `src/components/Header.astro` and `src/components/Footer.astro`. To add a logo or favicon, put the files in `public/images/` and link them from `<head>` in `src/layouts/BaseLayout.astro`.
 
 ## Managing Products
 
@@ -131,7 +117,7 @@ export const SHOW_PRODUCTS = false; // false = hides the products section and re
 
 ## Deployment
 
-The site auto-deploys to GitHub Pages when you push to `main`.
+Pushing to `main` runs the tests (`npm test`) and the build, then deploys to GitHub Pages. Opening a PR runs the same tests and build in CI (`.github/workflows/ci.yml`).
 
 ### First-time GitHub Pages Setup
 

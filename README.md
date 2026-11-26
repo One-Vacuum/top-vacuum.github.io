@@ -39,37 +39,23 @@ For English: [README.en.md](README.en.md)
 
 - `npm run dev` 오류 없이 실행
 - 페이지 정상 로드 (http://localhost:4321)
-- 언어 전환 버튼 동작 (KO/EN 어느 쪽이든 터치하면 토글)
+- 언어 전환 버튼 동작 (KO는 한국어, EN은 영어)
 - 모든 제품 이미지 표시
 - 제품 카드 클릭 시 상세정보 전환 동작
 - 제품 검색 및 정렬 동작
 - 모바일 반응형 레이아웃 동작
 - `npm run build` 오류 없이 완료
+- `npm test` 통과
+- `npm run check` 통과 (타입 검사, `.tool-versions`의 Node 22 필요)
+- 두 사이트 공통 파일(언어 전환·CI 등)을 고쳤다면 `scripts/check-shared.sh ../one-vacuum.github.io` 통과 (두 사이트가 같은 파일을 씀)
 
 ## 이미지 추가
 
 > **이미지 크기 최적화**: 제품 이미지는 가능한 작은 파일 크기를 사용해주세요. JPG 형식 권장 (PNG 대비 파일 크기가 작음). 큰 이미지는 페이지 로딩 속도와 GitHub 저장소 용량에 영향을 줍니다.
 
-### 회사 로고
+### 회사 로고 · 파비콘
 
-로고 파일 위치:
-```
-public/images/logo.png
-```
-- 지원 형식: PNG, JPG, SVG
-
-### 파비콘
-
-파비콘 파일 위치:
-```
-public/images/favicon/
-├── favicon.ico
-├── favicon-16x16.png
-├── favicon-32x32.png
-├── apple-touch-icon.png
-├── android-chrome-192x192.png
-└── android-chrome-512x512.png
-```
+현재 로고 이미지와 파비콘은 없습니다. 헤더/푸터의 "TOP VACUUM"은 텍스트 워드마크(Inter Tight)로 `src/components/Header.astro`, `src/components/Footer.astro`에 있습니다. 로고나 파비콘을 추가하려면 `public/images/`에 파일을 넣고 `src/layouts/BaseLayout.astro`의 `<head>`에 링크를 추가하세요.
 
 ## 제품 관리
 
@@ -131,7 +117,7 @@ export const SHOW_PRODUCTS = false; // false = 제품 섹션 및 관련 네비�
 
 ## 배포
 
-`main` 브랜치에 푸시하면 GitHub Pages로 자동 배포됩니다.
+`main` 브랜치에 푸시하면 테스트(`npm test`)와 빌드 후 GitHub Pages로 자동 배포됩니다. PR을 열면 같은 테스트와 빌드가 CI(`.github/workflows/ci.yml`)로 실행됩니다.
 
 ### GitHub Pages 최초 설정
 
